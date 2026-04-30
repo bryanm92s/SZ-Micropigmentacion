@@ -1153,7 +1153,9 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
             (userNameMap||{})[String(userEmail||'').trim().toLowerCase()] || userEmail || ''
           } disabled style={{fontSize:13,background:'#f5f5f5',color:'#888',cursor:'not-allowed'}}/>
         )}
-      </div> && <div style={{background:result.ok||result.ok===null?'#EDF7F0':'var(--warn-bg)',borderRadius:10,padding:10,fontSize:13,marginBottom:14,color:result.ok||result.ok===null?'var(--green)':'var(--warn-t)'}}>
+      </div>
+
+      {result!==null && <div style={{background:result.ok||result.ok===null?'#EDF7F0':'var(--warn-bg)',borderRadius:10,padding:10,fontSize:13,marginBottom:14,color:result.ok||result.ok===null?'var(--green)':'var(--warn-t)'}}>
         {result.ok===null?'✅ Cita actualizada':result.ok?'✅ Cita y Calendar actualizados':`✅ Cita guardada. Calendar: ${result.error}`}
       </div>}
 
