@@ -44,7 +44,7 @@ function StatCard({ label, value, sub, color='#B85C6E' }) {
 }
 
 /* ── Tarjeta de usuario ── */
-function UserCard({ user, color, isCurrentUser }) {
+function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
   return (
     <div style={{
       background:'white',borderRadius:16,padding:'20px',
@@ -66,13 +66,17 @@ function UserCard({ user, color, isCurrentUser }) {
         {isCurrentUser && <span style={{marginLeft:'auto',background:PL,color:P,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:20,flexShrink:0}}>Tú</span>}
       </div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div style={{background:PL,borderRadius:10,padding:'12px',textAlign:'center'}}>
+        <div onClick={onGoCitas} style={{background:PL,borderRadius:10,padding:'12px',textAlign:'center',cursor:onGoCitas?'pointer':'default',transition:'opacity .15s'}}
+          onMouseEnter={e=>{if(onGoCitas)e.currentTarget.style.opacity='.75'}}
+          onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:28,fontWeight:800,color:P}}>{user.citas}</div>
-          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Citas creadas</div>
+          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{fontSize:10,color:P}}>→</span>}</div>
         </div>
-        <div style={{background:'#FEF9F0',borderRadius:10,padding:'12px',textAlign:'center'}}>
+        <div onClick={onGoGastos} style={{background:'#FEF9F0',borderRadius:10,padding:'12px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
+          onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
+          onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:28,fontWeight:800,color:'#D97706'}}>{user.gastos}</div>
-          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Gastos registrados</div>
+          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{fontSize:10,color:'#D97706'}}>→</span>}</div>
         </div>
       </div>
       {user.montoGastos > 0 && (
@@ -88,7 +92,7 @@ function UserCard({ user, color, isCurrentUser }) {
 /* ══════════════════════════════════════════════════════════════
    REPORTS TAB
 ══════════════════════════════════════════════════════════════ */
-export default function ReportsTab({ userEmail, userRole, sync, expenses, clients, appts, SE }) {
+export default function ReportsTab({ userEmail, userRole, sync, expenses, clients, appts, SE, setTab }) {
   const months   = getMonthOptions()
   const nowMonth = months[0]
   const [month,     setMonth]     = useState(nowMonth)
@@ -176,6 +180,8 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
                         user={u}
                         color={userColor(u.email)}
                         isCurrentUser={u.email===userEmail}
+                        onGoCitas={setTab ? ()=>setTab('appointments') : undefined}
+                        onGoGastos={setTab ? ()=>setTab('expense-detail') : undefined}
                       />
                     ))
                   }

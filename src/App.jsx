@@ -887,7 +887,7 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
   if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin} userName={userName} users={users} userNameMap={userNameMap}/>
   if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail} users={users} userNameMap={userNameMap}/>
 
-  const AccGroup = ({label,color,gKey,items,canEdit=true}) => {
+  const AccGroup = ({label,color,gKey,items,canEdit=true,uMap=userNameMap}) => {
     if (items.length===0) return null
     const sum     = items.reduce((s,a)=>s+toN(a.totalPrice||a.servicePrice||0),0)
     const doneSum = items.filter(a=>bool(a.completed)&&a.completed!=='noshow').reduce((s,a)=>s+toN(a.totalPrice||a.servicePrice||0),0)
@@ -908,7 +908,7 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
         {isOpen && (
           <div className="slide-in" style={{padding:'4px 12px 12px'}}>
             {sortG(items).map(a=>(
-              <ApptCard key={a.id} appt={a} canEdit={canEdit}
+              <ApptCard key={a.id} appt={a} canEdit={canEdit} userNameMap={uMap}
                 onToggle={(s)=>toggleCompleted(a,s)}
                 onEdit={()=>setEdit(a)}
                 onDelete={()=>confirm(`¿Eliminar la cita de ${a.clientName}? También se borrará el evento de Google Calendar.`,()=>deleteAppt(a))}
@@ -939,7 +939,7 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
   </>
 }
 
-function ApptCard({appt,canEdit,onToggle,onEdit,onDelete}) {
+function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
   const calOk  = bool(appt.calendarCreated)
   const dom    = bool(appt.domicilio)
   const status = appt.completed==='noshow' ? 'noshow' : bool(appt.completed) ? 'done' : 'pending'
@@ -2183,7 +2183,7 @@ function IncomeDetail({appts,setTab,tabExtra}) {
 /* ══════════════════════════════════════════════════════════════
    EXPENSE DETAIL
 ══════════════════════════════════════════════════════════════ */
-function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm}) {
+function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm,userNameMap={}}) {
   const [month,setM]=useState(tabExtra?.month || new Date().toISOString().slice(0,7))
   const [editId,setEI]=useState(null), [editData,setED]=useState({})
   const safe=Array.isArray(expenses)?expenses:[]
@@ -2250,7 +2250,7 @@ function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm}) {
                   <div style={{gridColumn:'span 2',display:'flex',gap:8}}><button className="btn" style={{flex:1}} onClick={saveEdit}>Guardar</button><button className="btn-del" onClick={()=>setEI(null)}>Cancelar</button></div>
                 </div>
                 :<div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:13}}>{e.description}</div><div style={{fontSize:11,color:'var(--t2)'}}>{e.category}</div></div>
+                  <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:13}}>{e.description}</div><div style={{fontSize:11,color:'var(--t2)'}}>{e.category}{e.createdBy && <span style={{marginLeft:6,color:'#B85C6E'}}>· {userNameMap[String(e.createdBy).trim().toLowerCase()] || String(e.createdBy).split('@')[0]}</span>}</div></div>
                   <span style={{fontWeight:700,color:'var(--red)',fontSize:13,flexShrink:0}}>{fmtM(e.amount)}</span>
                   <button className="btn-edit" onClick={()=>{setEI(e.id);setED({...e})}}>✏️</button>
                   <button className="btn-del" onClick={()=>confirm(`¿Eliminar el gasto "${e.description}"?`,()=>SE(safe.filter(x=>x.id!==e.id)))}>✕</button>
