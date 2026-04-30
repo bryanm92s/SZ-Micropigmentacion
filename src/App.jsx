@@ -5,6 +5,7 @@ import ReportsTab from './ReportsTab.jsx'
 
 const AUTH_KEY  = 'sz_auth_email'
 const ROLE_KEY  = 'sz_auth_role'
+const NAME_KEY  = 'sz_auth_name'
 
 /* ══════════════════════════════════════════════════════════════
    CONSTANTS & HELPERS
@@ -133,11 +134,12 @@ export default function App() {
   const [modal,    setModal] = useState(null) // {msg, onOk} or {type:'info', msg}
   const [userEmail,   setUserEmail]  = useState(() => localStorage.getItem(AUTH_KEY) || null)
   const [userRole,    setUserRole]   = useState(() => localStorage.getItem(ROLE_KEY)  || 'Empleada')
+  const [userName,    setUserName]   = useState(() => localStorage.getItem(NAME_KEY)   || '')
   const [showChangePw, setShowChangePw] = useState(false)
   const [userMenuOpen, setUserMenuOpen]  = useState(false)
 
-  const handleLogin  = (email, role='Empleada') => { localStorage.setItem(AUTH_KEY, email); localStorage.setItem(ROLE_KEY, role); setUserEmail(email); setUserRole(role) }
-  const handleLogout = () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem(ROLE_KEY); setUserEmail(null); setUserRole('Empleada') }
+  const handleLogin  = (email, role='Empleada', name='') => { localStorage.setItem(AUTH_KEY, email); localStorage.setItem(ROLE_KEY, role); localStorage.setItem(NAME_KEY, name); setUserEmail(email); setUserRole(role); setUserName(name) }
+  const handleLogout = () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem(ROLE_KEY); localStorage.removeItem(NAME_KEY); setUserEmail(null); setUserRole('Empleada'); setUserName('') }
 
   const setTab = (t, extra=null) => { setTabRaw(t); setTabExtra(extra) }
 
@@ -190,16 +192,17 @@ export default function App() {
 
   const isAdmin = userRole === 'Administradora'
 
-  // Empleada only sees her own expenses
+  // Empleada only sees her own expenses and her own appts
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
+  const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
 
-  const p = {clients,services,appts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin}
+  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName}
 
   if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>🌸</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
 
   return (
-    <AuthShell onLogin={handleLogin} onLogout={handleLogout} userEmail={userEmail} userRole={userRole}>
+    <AuthShell onLogin={handleLogin} onLogout={handleLogout} userEmail={userEmail} userRole={userRole} userName={userName}>
       {showChangePw && <ChangePasswordModal email={userEmail} onClose={()=>setShowChangePw(false)}/>}
     <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",minHeight:'100vh',background:'var(--bg)',color:'var(--t)'}}>
       <GS/>
@@ -219,11 +222,11 @@ export default function App() {
           <SyncBadge status={status} lastSync={lastSync}/>
           <div style={{position:'relative'}}>
             <button onClick={()=>setUserMenuOpen(v=>!v)} style={{background:'rgba(255,255,255,0.18)',border:'none',borderRadius:20,padding:'5px 10px',color:'white',fontSize:13,cursor:'pointer',fontFamily:'inherit',fontWeight:600,display:'flex',alignItems:'center',gap:5}}>
-              👤 <span style={{maxWidth:90,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{userEmail?.split('@')[0]}</span>
+              👤 <span style={{maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{userName || (userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
             </button>
             {userMenuOpen && (
               <div style={{position:'absolute',right:0,top:'calc(100% + 8px)',background:'white',borderRadius:12,boxShadow:'0 4px 24px rgba(0,0,0,.15)',padding:'8px',minWidth:180,zIndex:200}} onClick={()=>setUserMenuOpen(false)}>
-                <div style={{fontSize:11,color:'#999',padding:'4px 10px 8px',borderBottom:'1px solid #f0e8e8',marginBottom:6}}>{userEmail}</div>
+                <div style={{fontSize:11,color:'#999',padding:'4px 10px 8px',borderBottom:'1px solid #f0e8e8',marginBottom:6}}>{userName && <strong style={{display:'block',color:'#555',fontSize:12}}>{userName}</strong>}{userEmail}</div>
                 <button onClick={()=>setShowChangePw(true)} style={{width:'100%',textAlign:'left',background:'none',border:'none',padding:'9px 12px',fontSize:14,cursor:'pointer',fontFamily:'inherit',borderRadius:8,color:'#333',fontWeight:500}}>🔑 Cambiar contraseña</button>
                 <button onClick={handleLogout} style={{width:'100%',textAlign:'left',background:'none',border:'none',padding:'9px 12px',fontSize:14,cursor:'pointer',fontFamily:'inherit',borderRadius:8,color:'#B85C6E',fontWeight:600}}>🚪 Cerrar sesión</button>
               </div>
@@ -237,7 +240,7 @@ export default function App() {
           ['dashboard',  'grid',   'Panel',      true],
           ['appointments','cal',   'Citas',       true],
           ['clients',    'people', 'Clientes',    true],
-          ['services',   'stars',  'Servicios',   true],
+          ['services',   'stars',  'Servicios',   isAdmin],
           ['finances',   'chart',  'Finanzas',    isAdmin],
           ['reports',    'stats',  'Reportes',    isAdmin],
           ['my-expenses','wallet', 'Mis Gastos',  !isAdmin],
@@ -319,7 +322,7 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
 
   const delExpense = (e) => {
     const all = Array.isArray(expenses) ? expenses : []
-    confirm(`¿Eliminar el gasto '${e.description}'?`, () => SE(all.filter(x => x.id !== e.id)))
+    confirm(\`¿Eliminar el gasto "${e.description}"?\`, ()=>SE(all.filter(x=>x.id!==e.id)))
   }
 
   const inp = {width:'100%',padding:'10px 13px',border:'1.5px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:'inherit',background:'white',outline:'none',boxSizing:'border-box'}
@@ -561,11 +564,12 @@ function GS() { return <style>{`
 /* ══════════════════════════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════════════════════════ */
-function Dashboard({clients,appts,expenses,setTab}) {
+function Dashboard({clients,appts,visibleAppts,expenses,setTab,userEmail,isAdmin,userName}) {
   const [selMonth, setSelMonth] = useState(()=>new Date().toISOString().slice(0,7))
   const [finTab,   setFinTab]   = useState('general')
   const td = todayStr()
-  const ta = [...appts].filter(a=>cleanDate(a.date)===td).sort((a,b)=>cleanTime(a.time).localeCompare(cleanTime(b.time)))
+  const dispA = isAdmin ? appts : (visibleAppts||appts)
+  const ta = [...dispA].filter(a=>cleanDate(a.date)===td).sort((a,b)=>cleanTime(a.time).localeCompare(cleanTime(b.time)))
   const safeA = Array.isArray(appts)?appts:[]
   const safeE = Array.isArray(expenses)?expenses:[]
 
@@ -603,7 +607,9 @@ function Dashboard({clients,appts,expenses,setTab}) {
 
   return <>
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-      <div style={{fontFamily:'Georgia,serif',fontSize:21,fontWeight:600,color:'var(--t)'}}>Bienvenida {'\u2728'}</div>
+      <div style={{fontFamily:'Georgia,serif',fontSize:21,fontWeight:600,color:'var(--t)'}}>
+        Bienvenida, {userName || (userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())} {'\u2728'}
+      </div>
       <div style={{fontSize:11,color:'var(--t2)'}}>{new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'})}</div>
     </div>
 
@@ -622,7 +628,7 @@ function Dashboard({clients,appts,expenses,setTab}) {
       </div>
     </div>
 
-    <div className="card" style={{marginBottom:14,padding:0,overflow:'hidden'}}>
+    {isAdmin && <div className="card" style={{marginBottom:14,padding:0,overflow:'hidden'}}>
       <div style={{background:netoPos?'linear-gradient(135deg,var(--primary),var(--primary-d))':'linear-gradient(135deg,#B04040,#843030)',padding:'16px 18px',cursor:'pointer'}} onClick={()=>setTab('finances')}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
           <div style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.09em'}}>
@@ -655,12 +661,12 @@ function Dashboard({clients,appts,expenses,setTab}) {
       )}
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,padding:'14px 16px'}}>
-        <div style={{textAlign:'center',background:'#EDF7F0',borderRadius:12,padding:'11px 6px',cursor:'pointer'}} onClick={()=>setTab('income-detail', isMonth?{month:selMonth}:{})}>
+        <div style={{textAlign:'center',background:'#EDF7F0',borderRadius:12,padding:'11px 6px',cursor:'pointer'}} onClick={()=>setTab('income-detail', {month:isMonth?selMonth:undefined, from:'dashboard'})}>
           <div style={{fontSize:10,color:'var(--green)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3}}>Recibido</div>
           <div style={{fontFamily:'Georgia,serif',fontSize:14,fontWeight:700,color:'var(--green)'}}>{fmtM(aRevDone)}</div>
           <div style={{fontSize:10,color:'var(--green)',marginTop:2}}>{aDone.length} citas</div>
         </div>
-        <div style={{textAlign:'center',background:'#FFF8E6',borderRadius:12,padding:'11px 6px',cursor:'pointer'}} onClick={()=>setTab('income-detail', isMonth?{filter:'pending',month:selMonth}:{filter:'pending'})}>
+        <div style={{textAlign:'center',background:'#FFF8E6',borderRadius:12,padding:'11px 6px',cursor:'pointer'}} onClick={()=>setTab('income-detail', {filter:'pending', month:isMonth?selMonth:undefined, from:'dashboard'})}>
           <div style={{fontSize:10,color:'var(--gold)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3}}>Pendiente</div>
           <div style={{fontFamily:'Georgia,serif',fontSize:14,fontWeight:700,color:'var(--gold)'}}>{fmtM(aRevPend)}</div>
           <div style={{fontSize:10,color:'var(--gold)',marginTop:2}}>{aPend.length} {'\u2192'}</div>
@@ -679,7 +685,7 @@ function Dashboard({clients,appts,expenses,setTab}) {
           </div>
         </div>
       )}
-    </div>
+    </div>}
 
     <div className="card">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
@@ -839,22 +845,23 @@ function MonthlyBalance({appts,expenses,selMonth,setSelMonth,setTab}) {
 /* ══════════════════════════════════════════════════════════════
    APPOINTMENTS TAB — Fixed accordion (independent toggle)
 ══════════════════════════════════════════════════════════════ */
-function ApptsTab({clients,services,appts,SA,SC,sync,deleteAppt,confirm,infoModal}) {
+function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,confirm,infoModal,userEmail,isAdmin}) {
   const [showNew,  setNew]  = useState(false)
   const [editAppt, setEdit] = useState(null)
   // Only "today" open by default — each group toggles independently
   const [open, setOpen] = useState({today:true, tomorrow:false, upcoming:false, noshow:false, past:false})
   const td = todayStr(), tm = tomorrowStr()
+  const dispAppts = isAdmin ? appts : (visibleAppts||appts)
 
   const toggle = k => setOpen(p => ({...p, [k]: !p[k]}))
 
   // Groups — past includes today-past
   const groups = {
-    today:    appts.filter(a=>cleanDate(a.date)===td && !isPastAppt(a)),
-    tomorrow: appts.filter(a=>cleanDate(a.date)===tm),
-    upcoming: appts.filter(a=>{ const d=cleanDate(a.date); return d>tm }),
-    past:     appts.filter(a=>isPastAppt(a)&&a.completed!=='noshow'),
-    noshow:   appts.filter(a=>a.completed==='noshow')
+    today:    dispAppts.filter(a=>cleanDate(a.date)===td && !isPastAppt(a)),
+    tomorrow: dispAppts.filter(a=>cleanDate(a.date)===tm),
+    upcoming: dispAppts.filter(a=>{ const d=cleanDate(a.date); return d>tm }),
+    past:     dispAppts.filter(a=>isPastAppt(a)&&a.completed!=='noshow'),
+    noshow:   dispAppts.filter(a=>a.completed==='noshow')
   }
 
   const sortG = arr => [...arr].sort((a,b)=>`${cleanDate(a.date)}${cleanTime(a.time)}`.localeCompare(`${cleanDate(b.date)}${cleanTime(b.time)}`))
@@ -869,8 +876,8 @@ function ApptsTab({clients,services,appts,SA,SC,sync,deleteAppt,confirm,infoModa
     SA(next)
   }
 
-  if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)}/>
-  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)}/>
+  if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin}/>
+  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail}/>
 
   const AccGroup = ({label,color,gKey,items,canEdit=true}) => {
     if (items.length===0) return null
@@ -950,6 +957,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete}) {
         <span className="tag" style={{fontSize:11}}>✨ {appt.serviceNames}</span>
         <span className="tag" style={{fontSize:11}}>📅 {fmtDate(appt.date)}</span>
         <span className="tag" style={{fontSize:11}}>🕐 {fmtTime(appt.time)}</span>
+        {appt.assignedTo && <span className="tag" style={{fontSize:11}}>👩‍💼 {(appt.assignedTo||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
         {dom && <span className="tag-gold" style={{fontSize:11}}>🛵 Domicilio</span>}
         {status==='done'   && <span className="tag-g"    style={{fontSize:11}}>✓ Completada</span>}
         {status==='noshow' && <span style={{display:'inline-block',background:'#FFF0EC',color:'var(--red)',borderRadius:20,padding:'2px 10px',fontSize:12,fontWeight:600}}>✗ No asistió</span>}
@@ -973,7 +981,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete}) {
 }
 
 /* ── Edit Appointment — date, time AND services ── */
-function EditAppt({appt,services,appts,SA,sync,onClose}) {
+function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail}) {
   const safeSvcs = Array.isArray(services)?services:[]
 
   // Build originalIds + original price map from appt data
@@ -1010,6 +1018,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose}) {
   const [addr,    setAddr]  = useState(appt.address||'')
   const [loading, setL]     = useState(false)
   const [result,  setR]     = useState(null)
+  const [assignedTo, setAssignedTo] = useState(appt.assignedTo||'')
 
   const slots    = getSlots(date, [], appts, appt.id)
   const toggleSvc= id => setSvcIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
@@ -1025,7 +1034,8 @@ function EditAppt({appt,services,appts,SA,sync,onClose}) {
       ...appt, date, time:cleanTime(time)||time,
       serviceIds:selSvcs.map(s=>s.id).join(','), serviceNames:svcNames,
       servicePrice:svcTotal, domicilio:dom, domicilioPrice:dom?toN(domP):0,
-      totalPrice:grand, address:dom?addr:''
+      totalPrice:grand, address:dom?addr:'',
+      assignedTo: isAdmin ? assignedTo : (appt.assignedTo||userEmail||'')
     }
     const next = appts.map(a=>a.id===appt.id?updated:a)
     await sync({appointments:next},null,null)
@@ -1133,7 +1143,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose}) {
 /* ══════════════════════════════════════════════════════════════
    NEW APPOINTMENT WIZARD
 ══════════════════════════════════════════════════════════════ */
-function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
+function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmail,isAdmin}) {
   const [step,    setStep]  = useState(1)
   const [query,   setQ]     = useState('')
   const [suggs,   setSuggs] = useState([])
@@ -1150,6 +1160,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
   const [loading, setL]     = useState(false)
   const [calR,    setCalR]  = useState(null)
   const [done,    setDone]  = useState(false)
+  const [assignedTo, setAssignedTo] = useState(userEmail||'')
 
   const isPhoneQ = q => /^\d+$/.test(q.replace(/[^0-9]/g,''))
 
@@ -1185,7 +1196,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
       return
     }
     if (createM && nameValid(newName) && phoneValid(newPhone)) {
-      const nc = {id:uid(),name:capWords(newName),phone:newPhone.trim(),createdAt:todayStr()}
+      const nc = {id:uid(),name:(newName||'').trim().toUpperCase(),phone:newPhone.trim(),createdAt:todayStr()}
       SC([...clients,nc]); setFc(nc)
     }
     setStep(3)
@@ -1206,7 +1217,8 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
       servicePrice:svcTotal, domicilio:dom, domicilioPrice:dom?toN(domP):0,
       totalPrice:grand, address:dom?addr:'',
       date, time:cleanTime(time)||time,
-      createdAt:new Date().toISOString(), calendarCreated:false, calendarEventId:'', completed:false
+      createdAt:new Date().toISOString(), calendarCreated:false, calendarEventId:'', completed:false,
+      assignedTo: assignedTo||userEmail||'', createdBy: userEmail||''
     }
     const res = await sync({
       appointments:[...appts,appt],
@@ -1359,6 +1371,14 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
       {time && <div style={{background:'var(--primary-l)',borderRadius:10,padding:10,fontSize:13,marginBottom:14}}>
         ✅ <strong>{fmtTime(time)}</strong> hasta aprox. <strong>{fmtTime(`${String(parseInt(time)+1).padStart(2,'0')}:${time.split(':')[1]}`)}</strong>
       </div>}
+      <div style={{marginBottom:16}}>
+        <label className="lbl">👩‍💼 Atendida por</label>
+        <input className="inp" value={assignedTo} onChange={e=>setAssignedTo(e.target.value)}
+          placeholder="correo@email.com"
+          style={{fontSize:13}}
+        />
+        <div style={{fontSize:11,color:'var(--t2)',marginTop:4}}>Por defecto tú. Solo la administradora puede cambiar este campo.</div>
+      </div>
       <div style={{display:'flex',gap:8}}>
         <button className="btn-o" onClick={()=>setStep(3)}>Atrás</button>
         <button className="btn" style={{flex:1}} onClick={()=>setStep(4.5)} disabled={!time}>Ver resumen</button>
@@ -1368,7 +1388,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose}) {
     {/* S4.5 — Summary */}
     {step===4.5&&!loading&&!done && <div className="card">
       <div style={{fontFamily:'Georgia,serif',fontSize:18,marginBottom:16}}>Confirmar cita</div>
-      {[['👤 Cliente',fc?.name],['📱 Teléfono',fc?.phone],['✨ Servicios',selSvcs.map(s=>s.name).join(', ')],['💳 Servicios',fmtM(svcTotal)],...(dom?[['🛵 Domicilio',fmtM(domP)],['📍 Dirección',addr||'—']]:[])]
+      {[['👤 Cliente',fc?.name],['📱 Teléfono',fc?.phone],['✨ Servicios',selSvcs.map(s=>s.name).join(', ')],['💳 Servicios',fmtM(svcTotal)],...(dom?[['🛵 Domicilio',fmtM(domP)],['📍 Dirección',addr||'—']]:[]),['👩‍💼 Atendida por',(assignedTo||userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())]]
         .map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #FBF0F3',fontSize:14}}><span style={{color:'var(--t2)'}}>{l}</span><span style={{fontWeight:600,maxWidth:'60%',textAlign:'right'}}>{v}</span></div>)
       }
       <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',fontSize:16}}><span style={{fontWeight:700}}>💎 Total</span><span style={{fontWeight:700,color:'var(--primary)',fontSize:18}}>{fmtM(grand)}</span></div>
@@ -1431,7 +1451,7 @@ function ClientsTab({clients,appts,SC,confirm,infoModal,setTab}) {
     const dup   = safe.find(c=>(c.phone||'').replace(/\D/g,'')===clean)
     if (dup) { infoModal(`Ya existe "${dup.name}" con ese número. No se puede duplicar.`); return }
     if (!nameValid(name)||!phoneValid(phone)) return
-    SC([...safe,{id:uid(),name:capWords(name),phone:phone.trim(),createdAt:todayStr()}])
+    SC([...safe,{id:uid(),name:(name||'').trim().toUpperCase(),phone:phone.trim(),createdAt:todayStr()}])
     setN(''); setP('')
   }
 
@@ -1439,7 +1459,7 @@ function ClientsTab({clients,appts,SC,confirm,infoModal,setTab}) {
     const clean = editData.phone?.replace(/\D/g,'')||''
     const dup   = safe.find(x=>x.id!==c.id&&(x.phone||'').replace(/\D/g,'')===clean)
     if (dup) { infoModal(`Ya existe "${dup.name}" con ese número.`); return }
-    SC(safe.map(x=>x.id===c.id?{...c,...editData,name:capWords(editData.name||c.name)}:x)); setEI(null)
+    SC(safe.map(x=>x.id===c.id?{...c,...editData,name:(editData.name||c.name||'').trim().toUpperCase()}:x)); setEI(null)
   }
 
   const filt = safe.filter(c=>String(c.name||'').toLowerCase().includes(srch.toLowerCase())||String(c.phone||'').includes(srch))
@@ -2043,7 +2063,7 @@ function IncomeDetail({appts,setTab,tabExtra}) {
 
   return <>
     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
-      <button className="btn-sm" onClick={()=>setTab('finances')}>← Volver</button>
+      <button className="btn-sm" onClick={()=>setTab(tabExtra?.from||'finances')}>← Volver</button>
       <span style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:600}}>💚 Detalle Ingresos</span>
     </div>
     <select className="inp" value={month} onChange={e=>setM(e.target.value)} style={{marginBottom:12}}>
@@ -2138,7 +2158,7 @@ function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm}) {
 
   return <>
     <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
-      <button className="btn-sm" onClick={()=>setTab('finances')}>← Volver</button>
+      <button className="btn-sm" onClick={()=>setTab(tabExtra?.from||'finances')}>← Volver</button>
       <span style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:600}}>📤 Detalle Gastos</span>
     </div>
     <select className="inp" value={month} onChange={e=>setM(e.target.value)} style={{marginBottom:14}}>

@@ -80,7 +80,7 @@ function LoginView({ onLogin, switchTo }) {
     try {
       const hash = await hashPassword(pass)
       const data = await authLogin(email.trim().toLowerCase(), hash)
-      onLogin(data.email, data.role || 'Empleada')
+      onLogin(data.email, data.role || 'Empleada', data.name || '')
     } catch(e) { setErr(e.message) }
     finally { setBusy(false) }
   }
@@ -104,6 +104,7 @@ function LoginView({ onLogin, switchTo }) {
 
 /* ── REGISTER ── */
 function RegisterView({ onLogin, switchTo }) {
+  const [nombre, setNombre] = useState('')
   const [email,  setEmail ] = useState('')
   const [pass,   setPass  ] = useState('')
   const [pass2,  setPass2 ] = useState('')
@@ -112,14 +113,16 @@ function RegisterView({ onLogin, switchTo }) {
 
   async function submit() {
     setErr('')
+    if (!nombre.trim()) return setErr('Ingresa tu nombre')
     if (!email.trim() || !pass || !pass2) return setErr('Completa todos los campos')
     if (pass.length < 8) return setErr('La contraseña debe tener al menos 8 caracteres')
     if (pass !== pass2) return setErr('Las contraseñas no coinciden')
     setBusy(true)
     try {
       const hash = await hashPassword(pass)
-      const data = await authRegister(email.trim().toLowerCase(), hash)
-      onLogin(data.email, data.role || 'Empleada')
+      const cleanName = nombre.trim().replace(/\b\w/g, c => c.toUpperCase())
+      const data = await authRegister(email.trim().toLowerCase(), hash, cleanName)
+      onLogin(data.email, data.role || 'Empleada', data.name || cleanName)
     } catch(e) { setErr(e.message) }
     finally { setBusy(false) }
   }
@@ -128,6 +131,7 @@ function RegisterView({ onLogin, switchTo }) {
     <div style={card}>
       <Header title="Crear cuenta" sub="Solo correos autorizados pueden registrarse" />
       <ErrBox msg={err} />
+      <Field label="Tu nombre completo" value={nombre} onChange={setNombre} placeholder="Ej: Salomé Zuluaga" />
       <Field label="Correo electrónico" type="email" value={email} onChange={setEmail} placeholder="tu@correo.com" />
       <Field label="Contraseña" type="password" value={pass} onChange={setPass} placeholder="Mínimo 8 caracteres" />
       <Field label="Confirmar contraseña" type="password" value={pass2} onChange={setPass2} placeholder="Repite la contraseña" />
@@ -254,7 +258,7 @@ export function ChangePasswordModal({ email, onClose }) {
 }
 
 /* ── AUTH SHELL ── */
-export default function AuthShell({ children, onLogin, onLogout, userEmail, userRole }) {
+export default function AuthShell({ children, onLogin, onLogout, userEmail, userRole, userName }) {
   const [view, setView] = useState('login')
 
   // Already logged in — render the app

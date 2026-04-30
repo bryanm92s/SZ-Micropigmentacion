@@ -22,7 +22,7 @@ async function authPost(action, payload) {
 }
 
 export const authLogin         = (email, passwordHash) => authPost('auth_login',          { email, passwordHash })
-export const authRegister      = (email, passwordHash) => authPost('auth_register',       { email, passwordHash })
+export const authRegister      = (email, passwordHash, name) => authPost('auth_register', { email, passwordHash, name })
 export const authRequestReset  = (email)               => authPost('auth_request_reset',  { email })
 export const authResetPassword = (email, code, newHash)=> authPost('auth_reset_password', { email, code, newHash })
 export const authChangePassword= (email, currentHash, newHash) => authPost('auth_change_password', { email, currentHash, newHash })
