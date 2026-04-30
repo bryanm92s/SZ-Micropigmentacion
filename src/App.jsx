@@ -322,7 +322,9 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
 
   const delExpense = (e) => {
     const all = Array.isArray(expenses) ? expenses : []
-    confirm(\`¿Eliminar el gasto "${e.description}"?\`, ()=>SE(all.filter(x=>x.id!==e.id)))
+    confirm(`¿Eliminar el gasto "${e.description}"?`, () =>
+    SE(all.filter(x => x.id !== e.id))
+)
   }
 
   const inp = {width:'100%',padding:'10px 13px',border:'1.5px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:'inherit',background:'white',outline:'none',boxSizing:'border-box'}
