@@ -27,7 +27,10 @@ const USER_COLORS = ['#B85C6E','#6366F1','#0891B2','#059669','#D97706','#7C3AED'
 const userColor = email => USER_COLORS[
   [...email].reduce((a,c)=>a+c.charCodeAt(0),0) % USER_COLORS.length
 ]
-const userInitial = email => (email||'?')[0].toUpperCase()
+const userInitial = user => {
+  const display = (typeof user === 'object' ? user.name : null) || (typeof user === 'string' ? user : '')
+  return (display||'?')[0].toUpperCase()
+}
 
 /* ── Stat card ── */
 function StatCard({ label, value, sub, color='#B85C6E' }) {
@@ -53,9 +56,11 @@ function UserCard({ user, color, isCurrentUser }) {
           width:42,height:42,borderRadius:'50%',background:color,
           color:'white',display:'flex',alignItems:'center',justifyContent:'center',
           fontWeight:800,fontSize:18,flexShrink:0,
-        }}>{userInitial(user.email)}</div>
+        }}>{userInitial(user)}</div>
         <div style={{minWidth:0}}>
-          <div style={{fontWeight:700,fontSize:14,color:'#222',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email.split('@')[0]}</div>
+          <div style={{fontWeight:700,fontSize:14,color:'#222',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            {user.name || user.email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+          </div>
           <div style={{fontSize:11,color:'#aaa',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
         </div>
         {isCurrentUser && <span style={{marginLeft:'auto',background:PL,color:P,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:20,flexShrink:0}}>Tú</span>}

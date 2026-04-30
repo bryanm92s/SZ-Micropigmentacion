@@ -128,6 +128,7 @@ export default function App() {
   const [services, setS]   = useState([])
   const [appts,    setA]   = useState([])
   const [expenses, setE]   = useState([])
+  const [users,    setU]   = useState([])
   const [status,   setSt]  = useState('loading')
   const [errMsg,   setEM]  = useState('')
   const [lastSync, setLS]  = useState(null)
@@ -151,6 +152,7 @@ export default function App() {
       setS(Array.isArray(d.services)&&d.services.length?d.services:DEFAULT_SERVICES)
       setA(Array.isArray(d.appointments)?d.appointments:[])
       setE(Array.isArray(d.expenses)?d.expenses:[])
+      setU(Array.isArray(d.users)?d.users:[])
       setSt('ok'); setLS(new Date())
     }).catch(e => {
       setEM(e.message); setSt('error')
@@ -192,11 +194,17 @@ export default function App() {
 
   const isAdmin = userRole === 'Administradora'
 
+  // Mapa email → nombre para mostrar nombres reales en lugar de derivar del correo
+  const userNameMap = {}
+  users.forEach(u => { if (u.email) userNameMap[u.email.trim().toLowerCase()] = u.name || '' })
+  // También incluir el usuario actual en el mapa
+  if (userEmail && userName) userNameMap[userEmail.trim().toLowerCase()] = userName
+
   // Empleada only sees her own expenses and her own appts
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
   const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
 
-  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName}
+  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap}
 
   if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>🌸</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
@@ -845,7 +853,7 @@ function MonthlyBalance({appts,expenses,selMonth,setSelMonth,setTab}) {
 /* ══════════════════════════════════════════════════════════════
    APPOINTMENTS TAB — Fixed accordion (independent toggle)
 ══════════════════════════════════════════════════════════════ */
-function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,confirm,infoModal,userEmail,isAdmin}) {
+function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,confirm,infoModal,userEmail,isAdmin,userName,users,userNameMap}) {
   const [showNew,  setNew]  = useState(false)
   const [editAppt, setEdit] = useState(null)
   // Only "today" open by default — each group toggles independently
@@ -876,8 +884,8 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
     SA(next)
   }
 
-  if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin}/>
-  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail}/>
+  if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin} userName={userName} users={users} userNameMap={userNameMap}/>
+  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail} users={users} userNameMap={userNameMap}/>
 
   const AccGroup = ({label,color,gKey,items,canEdit=true}) => {
     if (items.length===0) return null
@@ -957,7 +965,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete}) {
         <span className="tag" style={{fontSize:11}}>✨ {appt.serviceNames}</span>
         <span className="tag" style={{fontSize:11}}>📅 {fmtDate(appt.date)}</span>
         <span className="tag" style={{fontSize:11}}>🕐 {fmtTime(appt.time)}</span>
-        {appt.assignedTo && <span className="tag" style={{fontSize:11}}>👩‍💼 {(appt.assignedTo||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
+        {appt.assignedTo && <span className="tag" style={{fontSize:11}}>👩‍💼 {userNameMap[String(appt.assignedTo).trim().toLowerCase()] || (appt.assignedTo||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
         {dom && <span className="tag-gold" style={{fontSize:11}}>🛵 Domicilio</span>}
         {status==='done'   && <span className="tag-g"    style={{fontSize:11}}>✓ Completada</span>}
         {status==='noshow' && <span style={{display:'inline-block',background:'#FFF0EC',color:'var(--red)',borderRadius:20,padding:'2px 10px',fontSize:12,fontWeight:600}}>✗ No asistió</span>}
@@ -981,7 +989,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete}) {
 }
 
 /* ── Edit Appointment — date, time AND services ── */
-function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail}) {
+function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,userNameMap}) {
   const safeSvcs = Array.isArray(services)?services:[]
 
   // Build originalIds + original price map from appt data
@@ -1125,7 +1133,27 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail}) {
       </div>
       {time && <div style={{background:'var(--primary-l)',borderRadius:10,padding:10,fontSize:13,marginBottom:14}}>✅ <strong>{fmtTime(time)}</strong> — {fmtDate(date)}</div>}
 
-      {result!==null && <div style={{background:result.ok||result.ok===null?'#EDF7F0':'var(--warn-bg)',borderRadius:10,padding:10,fontSize:13,marginBottom:14,color:result.ok||result.ok===null?'var(--green)':'var(--warn-t)'}}>
+      {/* Atendida por */}
+      <div style={{marginBottom:14}}>
+        <label className="lbl">👩‍💼 Atendida por</label>
+        {isAdmin ? (
+          <select className="inp" value={assignedTo} onChange={e=>setAssignedTo(e.target.value)} style={{fontSize:13}}>
+            {(users||[]).filter(u=>u.email).map(u=>(
+              <option key={u.email} value={u.email}>
+                {u.name || u.email.split('@')[0]} — {u.email}
+              </option>
+            ))}
+            {/* Si el assignedTo actual no está en users, mostrarlo igual */}
+            {assignedTo && !(users||[]).some(u=>u.email===assignedTo) && (
+              <option value={assignedTo}>{assignedTo}</option>
+            )}
+          </select>
+        ) : (
+          <input className="inp" value={
+            (userNameMap||{})[String(userEmail||'').trim().toLowerCase()] || userEmail || ''
+          } disabled style={{fontSize:13,background:'#f5f5f5',color:'#888',cursor:'not-allowed'}}/>
+        )}
+      </div> && <div style={{background:result.ok||result.ok===null?'#EDF7F0':'var(--warn-bg)',borderRadius:10,padding:10,fontSize:13,marginBottom:14,color:result.ok||result.ok===null?'var(--green)':'var(--warn-t)'}}>
         {result.ok===null?'✅ Cita actualizada':result.ok?'✅ Cita y Calendar actualizados':`✅ Cita guardada. Calendar: ${result.error}`}
       </div>}
 
@@ -1143,7 +1171,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail}) {
 /* ══════════════════════════════════════════════════════════════
    NEW APPOINTMENT WIZARD
 ══════════════════════════════════════════════════════════════ */
-function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmail,isAdmin}) {
+function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmail,isAdmin,userName,users,userNameMap}) {
   const [step,    setStep]  = useState(1)
   const [query,   setQ]     = useState('')
   const [suggs,   setSuggs] = useState([])
@@ -1373,11 +1401,24 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
       </div>}
       <div style={{marginBottom:16}}>
         <label className="lbl">👩‍💼 Atendida por</label>
-        <input className="inp" value={assignedTo} onChange={e=>setAssignedTo(e.target.value)}
-          placeholder="correo@email.com"
-          style={{fontSize:13}}
-        />
-        <div style={{fontSize:11,color:'var(--t2)',marginTop:4}}>Por defecto tú. Solo la administradora puede cambiar este campo.</div>
+        {isAdmin ? (
+          <select className="inp" value={assignedTo} onChange={e=>setAssignedTo(e.target.value)} style={{fontSize:13}}>
+            {(users||[]).filter(u=>u.email).map(u=>(
+              <option key={u.email} value={u.email}>
+                {u.name || u.email.split('@')[0]} — {u.email}
+              </option>
+            ))}
+            {assignedTo && !(users||[]).some(u=>u.email===assignedTo) && (
+              <option value={assignedTo}>{assignedTo}</option>
+            )}
+          </select>
+        ) : (
+          <input className="inp"
+            value={userName || (userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
+            disabled
+            style={{fontSize:13, background:'#f5f5f5', color:'#888', cursor:'not-allowed'}}
+          />
+        )}
       </div>
       <div style={{display:'flex',gap:8}}>
         <button className="btn-o" onClick={()=>setStep(3)}>Atrás</button>
@@ -1388,7 +1429,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
     {/* S4.5 — Summary */}
     {step===4.5&&!loading&&!done && <div className="card">
       <div style={{fontFamily:'Georgia,serif',fontSize:18,marginBottom:16}}>Confirmar cita</div>
-      {[['👤 Cliente',fc?.name],['📱 Teléfono',fc?.phone],['✨ Servicios',selSvcs.map(s=>s.name).join(', ')],['💳 Servicios',fmtM(svcTotal)],...(dom?[['🛵 Domicilio',fmtM(domP)],['📍 Dirección',addr||'—']]:[]),['👩‍💼 Atendida por',(assignedTo||userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())]]
+      {[['👤 Cliente',fc?.name],['📱 Teléfono',fc?.phone],['✨ Servicios',selSvcs.map(s=>s.name).join(', ')],['💳 Servicios',fmtM(svcTotal)],...(dom?[['🛵 Domicilio',fmtM(domP)],['📍 Dirección',addr||'—']]:[]),['👩‍💼 Atendida por', (userNameMap||{})[String(assignedTo||userEmail||'').trim().toLowerCase()] || (assignedTo||userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())]]
         .map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #FBF0F3',fontSize:14}}><span style={{color:'var(--t2)'}}>{l}</span><span style={{fontWeight:600,maxWidth:'60%',textAlign:'right'}}>{v}</span></div>)
       }
       <div style={{display:'flex',justifyContent:'space-between',padding:'10px 0',fontSize:16}}><span style={{fontWeight:700}}>💎 Total</span><span style={{fontWeight:700,color:'var(--primary)',fontSize:18}}>{fmtM(grand)}</span></div>
