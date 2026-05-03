@@ -66,11 +66,19 @@ const isPastAppt = a => {
 }
 
 // Returns available time slots: filters taken + past-today + custom exclude
-const getSlots = (date, takenApptIds, allAppts, excludeId=null) => {
+const getSlots = (date, takenApptIds, allAppts, excludeId=null, assignedTo=null) => {
   const now     = new Date()
   const isToday = date === todayStr()
   const taken   = allAppts
-    .filter(a => cleanDate(a.date)===date && a.id!==excludeId)
+    .filter(a => {
+      if (cleanDate(a.date) !== date) return false
+      if (a.id === excludeId) return false
+      // Si hay empleada asignada, solo bloquear las horas de esa empleada
+      if (assignedTo) {
+        return String(a.assignedTo||'').trim().toLowerCase() === String(assignedTo).trim().toLowerCase()
+      }
+      return true
+    })
     .map(a => cleanTime(a.time))
 
   return TIME_SLOTS.map(t => {
@@ -1066,7 +1074,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
   const [result,  setR]     = useState(null)
   const [assignedTo, setAssignedTo] = useState(appt.assignedTo||'')
 
-  const slots    = getSlots(date, [], appts, appt.id)
+  const slots    = getSlots(date, [], appts, appt.id, isAdmin ? assignedTo : null)
   const toggleSvc= id => setSvcIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
   const selSvcs  = safeSvcs.filter(s=>svcIds.includes(s.id))
   // Price: original price for pre-existing services, current price for newly added
@@ -1298,7 +1306,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
   const selSvcs   = (Array.isArray(services)?services:[]).filter(s=>svcIds.includes(s.id))
   const svcTotal  = selSvcs.reduce((s,x)=>s+toN(x.price),0)
   const grand     = svcTotal+(dom?toN(domP):0)
-  const slots     = getSlots(date,[],appts)
+  const slots     = getSlots(date,[],appts,null, isAdmin ? assignedTo : null)
 
   // Conflicto: ¿la empleada asignada ya tiene cita en esa fecha y hora?
   const conflictNW = isAdmin && assignedTo && date && time
