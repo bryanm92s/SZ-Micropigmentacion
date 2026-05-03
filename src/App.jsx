@@ -1702,7 +1702,7 @@ function ServicesTab({services,SS,confirm}) {
 /* ══════════════════════════════════════════════════════════════
    FINANCES TAB
 ══════════════════════════════════════════════════════════════ */
-function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail}) {
+function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail,userNameMap={}}) {
   const [month,setM]=useState(new Date().toISOString().slice(0,7))
   const [desc,setD]=useState(''), [amount,setA]=useState(''), [cat,setC]=useState('Insumos'), [expDate,setED]=useState(todayStr())
   const [editId,setEI]=useState(null), [editData,setEData]=useState({})
@@ -1799,7 +1799,7 @@ function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail}) {
               <div style={{gridColumn:'span 2',display:'flex',gap:8}}><button className="btn" style={{flex:1}} onClick={saveEdit}>Guardar</button><button className="btn-del" onClick={()=>setEI(null)}>Cancelar</button></div>
             </div>
             :<div style={{display:'flex',alignItems:'center',gap:8}}>
-              <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:13}}>{e.description}</div><div style={{fontSize:11,color:'var(--t2)'}}>{e.category} · {fmtDate(e.date)}</div></div>
+              <div style={{flex:1,minWidth:0}}><div style={{fontWeight:600,fontSize:13}}>{e.description}</div><div style={{fontSize:11,color:'var(--t2)'}}>{e.category} · {fmtDate(e.date)}{e.createdBy&&<span style={{color:'#B85C6E',marginLeft:6}}>· {userNameMap[String(e.createdBy).trim().toLowerCase()] || String(e.createdBy).split('@')[0]}</span>}</div></div>
               <span style={{fontWeight:700,color:'var(--red)',fontSize:13,flexShrink:0}}>{fmtM(e.amount)}</span>
               <button className="btn-edit" onClick={()=>{setEI(e.id);setEData({...e})}}>✏️</button>
               <button className="btn-del" onClick={()=>confirm(`¿Eliminar el gasto "${e.description}"?`,()=>SE(safe.filter(x=>x.id!==e.id)))}>✕</button>
