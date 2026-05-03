@@ -459,39 +459,6 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
   )
 }
 
-  const today = new Date().toISOString().slice(0,10)
-  const [desc, setD] = useState('')
-  const [amount, setA] = useState('')
-  const [cat, setCat]  = useState('Insumos')
-  const [expDate, setED] = useState(today)
-  const [editId, setEI]  = useState(null)
-  const [editData, setED2] = useState({})
-
-  const CATS = ['Insumos','Arriendo','Servicios','Transporte','Alimentación','Otro']
-  const safe = Array.isArray(visibleExpenses) ? visibleExpenses : []
-  const total = safe.reduce((s,e)=>s+Number(e.amount||0),0)
-
-  const add = () => {
-    if (!desc.trim()||!amount) return
-    const all = Array.isArray(expenses) ? expenses : []
-    SE([...all, {id:uid(),description:capFirst(desc),amount:Number(amount),category:cat,date:expDate,createdBy:userEmail||''}])
-    setD(''); setA('')
-  }
-
-  const saveEdit = () => {
-    const all = Array.isArray(expenses) ? expenses : []
-    SE(all.map(e=>e.id===editId?{...e,...editData}:e))
-    setEI(null)
-  }
-
-  const delExpense = (e) => {
-    const all = Array.isArray(expenses) ? expenses : []
-    confirm(`¿Eliminar el gasto "${e.description}"?`, ()=>SE(all.filter(x=>x.id!==e.id)))
-  }
-
-  const inp = {width:'100%',padding:'10px 13px',border:'1.5px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:'inherit',background:'white',outline:'none',boxSizing:'border-box'}
-  const P = '#B85C6E', PL = '#FDF6F0', PB = '#F5D0D8'
-
 function Modal({msg, onOk, onCancel, okLabel='Eliminar', cancelLabel='Cancelar'}) {
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
