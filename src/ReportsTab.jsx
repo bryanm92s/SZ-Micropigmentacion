@@ -180,8 +180,8 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
                         user={u}
                         color={userColor(u.email)}
                         isCurrentUser={u.email===userEmail}
-                        onGoCitas={setTab ? ()=>setTab('appointments') : undefined}
-                        onGoGastos={setTab ? ()=>setTab('expense-detail') : undefined}
+                        onGoCitas={setTab ? ()=>setTab('appointments',{from:'reports'}) : undefined}
+                        onGoGastos={setTab ? ()=>setTab('expense-detail',{from:'reports'}) : undefined}
                       />
                     ))
                   }
