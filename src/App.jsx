@@ -300,8 +300,164 @@ export default function App() {
 ══════════════════════════════════════════════════════════════ */
 function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
   const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7)
-  const capFirst = s => s ? s[0].toUpperCase()+s.slice(1) : s
+  const capFirst = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s
   const fmt = n => Number(n||0).toLocaleString('es-CO')
+  const fmtM2 = n => '$'+Number(n||0).toLocaleString('es-CO')
+
+  const today = new Date().toISOString().slice(0,10)
+  const [desc, setD]     = useState('')
+  const [amount, setA]   = useState('')
+  const [cat, setCat]    = useState('Insumos')
+  const [expDate, setED] = useState(today)
+  const [editId, setEI]  = useState(null)
+  const [editData, setED2] = useState({})
+  const [month, setM]    = useState(today.slice(0,7))
+
+  // Categorías fijas — empleada NO puede crear categorías nuevas
+  const CATS = [...DEF_CATS]
+  const safe = Array.isArray(visibleExpenses) ? visibleExpenses : []
+  const allExpenses = Array.isArray(expenses) ? expenses : []
+  const months = [...new Set([...safe.map(e=>cleanDate(e.date).slice(0,7)), today.slice(0,7)].filter(Boolean))].sort((a,b)=>b.localeCompare(a))
+  const me = safe.filter(e=>cleanDate(e.date).slice(0,7)===month)
+  const total = me.reduce((s,e)=>s+toN(e.amount||0),0)
+
+  const add = () => {
+    if (!desc.trim()||!amount) return
+    SE([...allExpenses, {id:uid(),description:capFirst(desc),amount:Number(amount),category:cat,date:expDate,createdBy:userEmail||''}])
+    setD(''); setA('')
+  }
+
+  const saveEdit = () => {
+    SE(allExpenses.map(e=>e.id===editId?{...e,...editData,description:capFirst(editData.description||'')}:e))
+    setEI(null)
+  }
+
+  const delExpense = (e) => {
+    confirm(`¿Eliminar el gasto "${e.description}"?`, ()=>SE(allExpenses.filter(x=>x.id!==e.id)))
+  }
+
+  const P = '#B85C6E', PL = '#FDF6F0', PB = '#F5D0D8'
+  const monthLabel = m => new Date(m+'-01T12:00:00').toLocaleDateString('es-CO',{month:'long',year:'numeric'})
+
+  return (
+    <div style={{padding:'0 16px 80px'}}>
+      <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:600,color:'var(--t)',marginBottom:4}}>Mis Gastos</div>
+      <div style={{fontSize:13,color:'#aaa',marginBottom:16}}>Solo ves y gestionas los gastos que tú registraste</div>
+
+      {/* Selector de mes */}
+      <div style={{marginBottom:14}}>
+        <label className="lbl">Ver mes</label>
+        <select className="inp" value={month} onChange={e=>setM(e.target.value)}>
+          {months.map(m=><option key={m} value={m}>{monthLabel(m)}</option>)}
+        </select>
+      </div>
+
+      {/* Total */}
+      <div style={{background:PL,borderRadius:14,padding:'16px 20px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center',border:`1px solid ${PB}`}}>
+        <div>
+          <div style={{fontSize:11,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'.06em'}}>Total del mes</div>
+          <div style={{fontSize:28,fontWeight:800,color:P,letterSpacing:'-1px'}}>{fmtM2(total)}</div>
+        </div>
+        <div style={{fontSize:11,color:'#bbb',textAlign:'right'}}>{me.length} gasto{me.length!==1?'s':''}</div>
+      </div>
+
+      {/* Formulario nuevo gasto */}
+      <div className="card">
+        <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>➕ Nuevo gasto</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
+          <div style={{gridColumn:'1/-1'}}>
+            <label className="lbl">Descripción</label>
+            <input className="inp" value={desc}
+              onChange={e=>setD(capFirst(e.target.value))}
+              placeholder="Ej: Cera depilatoria"/>
+          </div>
+          <div>
+            <label className="lbl">Monto (COP)</label>
+            <input className="inp" type="number" placeholder="20000" value={amount} onChange={e=>setA(e.target.value)}/>
+          </div>
+          <div>
+            <label className="lbl">Fecha</label>
+            <input type="date" className="inp" value={expDate} onChange={e=>setED(e.target.value)}/>
+          </div>
+          <div style={{gridColumn:'1/-1'}}>
+            <label className="lbl">Categoría</label>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4}}>
+              {CATS.map(c=>(
+                <button key={c} onClick={()=>setCat(c)}
+                  style={{padding:'6px 14px',borderRadius:20,border:`1.5px solid ${cat===c?P:PB}`,
+                    background:cat===c?P:'white',color:cat===c?'white':'#666',
+                    fontFamily:'inherit',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all .15s'}}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button className="btn" style={{width:'100%'}} onClick={add} disabled={!desc.trim()||!amount}>
+          Registrar gasto
+        </button>
+      </div>
+
+      {/* Lista */}
+      {me.length===0 ? (
+        <div style={{textAlign:'center',padding:'40px',color:'#ccc'}}>
+          <div style={{fontSize:32,marginBottom:8}}>🧾</div>
+          <div>No hay gastos en este mes</div>
+        </div>
+      ) : (
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>📋 Gastos del mes</div>
+          {[...me].sort((a,b)=>cleanDate(a.date).localeCompare(cleanDate(b.date))).map(e=>{
+            const isEdit = editId===e.id
+            return (
+              <div key={e.id} style={{padding:'10px 0',borderBottom:'1px solid #FBF0F3'}}>
+                {isEdit ? (
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                    <div style={{gridColumn:'1/-1'}}>
+                      <label className="lbl">Descripción</label>
+                      <input className="inp" value={editData.description||''}
+                        onChange={ev=>setED2(d=>({...d,description:capFirst(ev.target.value)}))}
+                        placeholder="Descripción"/>
+                    </div>
+                    <div><label className="lbl">Monto</label><input className="inp" type="number" value={editData.amount||''} onChange={ev=>setED2(d=>({...d,amount:ev.target.value}))}/></div>
+                    <div><label className="lbl">Fecha</label><input type="date" className="inp" value={editData.date||''} onChange={ev=>setED2(d=>({...d,date:ev.target.value}))}/></div>
+                    <div style={{gridColumn:'1/-1'}}>
+                      <label className="lbl">Categoría</label>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4}}>
+                        {CATS.map(c=>(
+                          <button key={c} onClick={()=>setED2(d=>({...d,category:c}))}
+                            style={{padding:'5px 12px',borderRadius:20,border:`1.5px solid ${(editData.category||cat)===c?P:PB}`,
+                              background:(editData.category||cat)===c?P:'white',color:(editData.category||cat)===c?'white':'#666',
+                              fontFamily:'inherit',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{gridColumn:'span 2',display:'flex',gap:8}}>
+                      <button className="btn" style={{flex:1}} onClick={saveEdit}>Guardar</button>
+                      <button className="btn-del" onClick={()=>setEI(null)}>Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:13,color:'#222',marginBottom:2}}>{e.description}</div>
+                      <div style={{fontSize:11,color:'var(--t2)'}}>{e.category} · {fmtDate(e.date)}</div>
+                    </div>
+                    <span style={{fontWeight:700,color:P,fontSize:14,flexShrink:0}}>{fmtM2(e.amount)}</span>
+                    <button className="btn-edit" onClick={()=>{setEI(e.id);setED2({...e})}}>✏️</button>
+                    <button className="btn-del" onClick={()=>delExpense(e)}>✕</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
   const today = new Date().toISOString().slice(0,10)
   const [desc, setD] = useState('')
@@ -335,91 +491,6 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
 
   const inp = {width:'100%',padding:'10px 13px',border:'1.5px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:'inherit',background:'white',outline:'none',boxSizing:'border-box'}
   const P = '#B85C6E', PL = '#FDF6F0', PB = '#F5D0D8'
-
-  return (
-    <div style={{padding:'0 16px 80px'}}>
-      <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:600,color:'var(--t)',marginBottom:4}}>Mis Gastos</div>
-      <div style={{fontSize:13,color:'#aaa',marginBottom:20}}>Solo ves y gestionas los gastos que tú registraste</div>
-
-      {/* Total */}
-      <div style={{background:PL,borderRadius:14,padding:'16px 20px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center',border:`1px solid ${PB}`}}>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'.06em'}}>Total registrado</div>
-          <div style={{fontSize:28,fontWeight:800,color:P,letterSpacing:'-1px'}}>${fmt(total)}</div>
-        </div>
-        <div style={{fontSize:11,color:'#bbb',textAlign:'right'}}>{safe.length} gasto{safe.length!==1?'s':''}</div>
-      </div>
-
-      {/* Formulario nuevo gasto */}
-      <div style={{background:'white',borderRadius:16,padding:'18px',marginBottom:20,boxShadow:'0 2px 12px rgba(180,92,110,.07)'}}>
-        <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:14}}>➕ Nuevo gasto</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-          <div style={{gridColumn:'1/-1'}}>
-            <input value={desc} onChange={e=>setD(e.target.value)} placeholder="Descripción" style={inp}/>
-          </div>
-          <input value={amount} onChange={e=>setA(e.target.value)} placeholder="Monto" type="number" min="0" style={inp}/>
-          <input value={expDate} onChange={e=>setED(e.target.value)} type="date" style={inp}/>
-          <div style={{gridColumn:'1/-1',display:'flex',flexWrap:'wrap',gap:6}}>
-            {CATS.map(c=>(
-              <button key={c} onClick={()=>setCat(c)}
-                style={{padding:'6px 12px',borderRadius:20,border:`1.5px solid ${cat===c?P:PB}`,
-                  background:cat===c?PL:'white',color:cat===c?P:'#666',
-                  fontFamily:'inherit',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-        <button onClick={add} disabled={!desc.trim()||!amount}
-          style={{width:'100%',padding:'12px',background:!desc.trim()||!amount?'#e0d0d3':P,
-            color:'white',border:'none',borderRadius:12,fontSize:14,fontWeight:700,
-            cursor:!desc.trim()||!amount?'not-allowed':'pointer',fontFamily:'inherit'}}>
-          Registrar gasto
-        </button>
-      </div>
-
-      {/* Lista */}
-      {safe.length===0 ? (
-        <div style={{textAlign:'center',padding:'40px',color:'#ccc'}}>
-          <div style={{fontSize:32,marginBottom:8}}>🧾</div>
-          <div>Aún no tienes gastos registrados</div>
-        </div>
-      ) : (
-        <div style={{display:'flex',flexDirection:'column',gap:10}}>
-          {[...safe].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>(
-            editId===e.id ? (
-              <div key={e.id} style={{background:'white',borderRadius:14,padding:'16px',boxShadow:'0 2px 12px rgba(0,0,0,.07)'}}>
-                <input value={editData.description||''} onChange={ev=>setED2(d=>({...d,description:ev.target.value}))} style={{...inp,marginBottom:8}} placeholder="Descripción"/>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-                  <input value={editData.amount||''} onChange={ev=>setED2(d=>({...d,amount:ev.target.value}))} type="number" style={inp} placeholder="Monto"/>
-                  <input value={editData.date||''} onChange={ev=>setED2(d=>({...d,date:ev.target.value}))} type="date" style={inp}/>
-                </div>
-                <div style={{display:'flex',gap:8}}>
-                  <button onClick={saveEdit} style={{flex:1,padding:'10px',background:P,color:'white',border:'none',borderRadius:10,fontFamily:'inherit',fontWeight:700,cursor:'pointer'}}>Guardar</button>
-                  <button onClick={()=>setEI(null)} style={{flex:1,padding:'10px',background:'#f5f5f5',color:'#666',border:'none',borderRadius:10,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
-                </div>
-              </div>
-            ) : (
-              <div key={e.id} style={{background:'white',borderRadius:14,padding:'14px 16px',boxShadow:'0 1px 8px rgba(0,0,0,.05)',display:'flex',alignItems:'center',gap:12}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:600,fontSize:14,color:'#222',marginBottom:2}}>{e.description}</div>
-                  <div style={{fontSize:12,color:'#aaa'}}>{e.category} · {e.date}</div>
-                </div>
-                <div style={{fontWeight:800,fontSize:16,color:P,flexShrink:0}}>${fmt(e.amount)}</div>
-                <div style={{display:'flex',gap:6}}>
-                  <button onClick={()=>{setEI(e.id);setED2({description:e.description,amount:e.amount,date:e.date,category:e.category})}}
-                    style={{background:'#f5f5f5',border:'none',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:13}}>✏️</button>
-                  <button onClick={()=>delExpense(e)}
-                    style={{background:'#FFF0F0',border:'none',borderRadius:8,padding:'6px 10px',cursor:'pointer',fontSize:13,color:'#C00'}}>✕</button>
-                </div>
-              </div>
-            )
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function Modal({msg, onOk, onCancel, okLabel='Eliminar', cancelLabel='Cancelar'}) {
   return (
@@ -1035,6 +1106,19 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
   const svcTotal = svcIds.reduce((s,id)=>s+getPriceFor(id),0)
   const grand    = svcTotal+(dom?toN(domP):0)
 
+  // Conflicto: ¿la empleada asignada ya tiene cita en esa fecha y hora?
+  const conflict = isAdmin && assignedTo && date && time
+    ? (Array.isArray(appts)?appts:[]).find(a =>
+        a.id !== appt.id &&
+        String(a.assignedTo||'').trim().toLowerCase() === String(assignedTo).trim().toLowerCase() &&
+        cleanDate(a.date) === cleanDate(date) &&
+        cleanTime(a.time) === cleanTime(time)
+      )
+    : null
+  const conflictName = conflict
+    ? ((userNameMap||{})[String(assignedTo).trim().toLowerCase()] || String(assignedTo).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
+    : ''
+
   const save = async () => {
     setL(true)
     const svcNames = selSvcs.map(s=>s.name).join(', ')
@@ -1155,6 +1239,17 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
         )}
       </div>
 
+
+      {/* Aviso de conflicto de horario */}
+      {conflict && (
+        <div style={{background:'#FFF8E1',border:'1.5px solid #F6C90E',borderRadius:12,padding:'12px 14px',marginBottom:14,display:'flex',gap:10,alignItems:'flex-start'}}>
+          <span style={{fontSize:20,flexShrink:0}}>⚠️</span>
+          <div style={{fontSize:13,color:'#7A5C00',lineHeight:1.5}}>
+            <strong>Conflicto de horario:</strong> el día <strong>{fmtDate(date)}</strong> a las <strong>{fmtTime(time)}</strong>, <strong>{conflictName}</strong> ya tiene una cita con <strong>{conflict.clientName}</strong>.
+          </div>
+        </div>
+      )}
+
       {result!==null && <div style={{background:result.ok||result.ok===null?'#EDF7F0':'var(--warn-bg)',borderRadius:10,padding:10,fontSize:13,marginBottom:14,color:result.ok||result.ok===null?'var(--green)':'var(--warn-t)'}}>
         {result.ok===null?'✅ Cita actualizada':result.ok?'✅ Cita y Calendar actualizados':`✅ Cita guardada. Calendar: ${result.error}`}
       </div>}
@@ -1163,7 +1258,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
         ? <button className="btn" style={{width:'100%'}} onClick={onClose}>Listo</button>
         : <div style={{display:'flex',gap:8}}>
             <button className="btn-o" onClick={onClose}>Cancelar</button>
-            <button className="btn" style={{flex:1}} onClick={save} disabled={!time||svcIds.length===0||loading}>{loading?'⏳ Guardando…':'Guardar cambios'}</button>
+            <button className="btn" style={{flex:1}} onClick={save} disabled={!time||svcIds.length===0||loading||!!conflict}>{loading?'⏳ Guardando…':'Guardar cambios'}</button>
           </div>
       }
     </div>
@@ -1237,6 +1332,18 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
   const svcTotal  = selSvcs.reduce((s,x)=>s+toN(x.price),0)
   const grand     = svcTotal+(dom?toN(domP):0)
   const slots     = getSlots(date,[],appts)
+
+  // Conflicto: ¿la empleada asignada ya tiene cita en esa fecha y hora?
+  const conflictNW = isAdmin && assignedTo && date && time
+    ? (Array.isArray(appts)?appts:[]).find(a =>
+        String(a.assignedTo||'').trim().toLowerCase() === String(assignedTo).trim().toLowerCase() &&
+        cleanDate(a.date) === cleanDate(date) &&
+        cleanTime(a.time) === cleanTime(time)
+      )
+    : null
+  const conflictNWName = conflictNW
+    ? ((userNameMap||{})[String(assignedTo).trim().toLowerCase()] || String(assignedTo).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
+    : ''
 
   const confirm = async () => {
     setL(true)
@@ -1424,7 +1531,15 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
       </div>
       <div style={{display:'flex',gap:8}}>
         <button className="btn-o" onClick={()=>setStep(3)}>Atrás</button>
-        <button className="btn" style={{flex:1}} onClick={()=>setStep(4.5)} disabled={!time}>Ver resumen</button>
+        {conflictNW && (
+          <div style={{background:'#FFF8E1',border:'1.5px solid #F6C90E',borderRadius:12,padding:'12px 14px',marginBottom:14,display:'flex',gap:10,alignItems:'flex-start'}}>
+            <span style={{fontSize:20,flexShrink:0}}>⚠️</span>
+            <div style={{fontSize:13,color:'#7A5C00',lineHeight:1.5}}>
+              <strong>Conflicto de horario:</strong> el día <strong>{fmtDate(date)}</strong> a las <strong>{fmtTime(time)}</strong>, <strong>{conflictNWName}</strong> ya tiene una cita con <strong>{conflictNW.clientName}</strong>.
+            </div>
+          </div>
+        )}
+        <button className="btn" style={{flex:1}} onClick={()=>setStep(4.5)} disabled={!time||!!conflictNW}>Ver resumen</button>
       </div>
     </div>}
 
@@ -1680,7 +1795,7 @@ function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail}) {
     <div className="card">
       <div style={{fontWeight:700,fontSize:15,marginBottom:14}}>📤 Agregar gasto</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
-        <div><label className="lbl">Descripción</label><input className="inp" placeholder="Ej: Cera" value={desc} onChange={e=>setD(e.target.value)}/></div>
+        <div><label className="lbl">Descripción</label><input className="inp" placeholder="Ej: Cera" value={desc} onChange={e=>setD(capFirst(e.target.value))}/></div>
         <div><label className="lbl">Monto (COP)</label><input className="inp" type="number" placeholder="20000" value={amount} onChange={e=>setA(e.target.value)}/></div>
         <div>
           <label className="lbl">Categoría</label>
@@ -1702,7 +1817,7 @@ function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail}) {
         return <div key={e.id} style={{padding:'10px 0',borderBottom:'1px solid #FBF0F3'}}>
           {isEdit
             ?<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-              <div><label className="lbl">Descripción</label><input className="inp" value={editData.description||''} onChange={x=>setEData(p=>({...p,description:x.target.value}))}/></div>
+              <div><label className="lbl">Descripción</label><input className="inp" value={editData.description||''} onChange={x=>setEData(p=>({...p,description:capFirst(x.target.value)}))}/></div>
               <div><label className="lbl">Monto</label><input className="inp" type="number" value={editData.amount||''} onChange={x=>setEData(p=>({...p,amount:x.target.value}))}/></div>
               <div><label className="lbl">Cat.</label><input className="inp" list="cats-f" value={editData.category||''} onChange={x=>setEData(p=>({...p,category:x.target.value}))}/><datalist id="cats-f">{allCats.map(c=><option key={c} value={c}/>)}</datalist></div>
               <div><label className="lbl">Fecha</label><input type="date" className="inp" value={editData.date||''} onChange={x=>setEData(p=>({...p,date:x.target.value}))}/></div>
@@ -1724,7 +1839,7 @@ function FinancesTab({appts,expenses,SE,setTab,confirm,userEmail}) {
 /* ══════════════════════════════════════════════════════════════
    CLIENT HISTORY
 ══════════════════════════════════════════════════════════════ */
-function ClientHistory({appts,setTab,tabExtra}) {
+function ClientHistory({appts,setTab,tabExtra,userNameMap={}}) {
   const client   = tabExtra?.client
   const safeAppts= Array.isArray(appts)?appts:[]
   if (!client) { return <div className="card" style={{textAlign:'center',padding:30,color:'var(--t2)'}}>Sin datos de cliente<br/><br/><button className="btn-sm" onClick={()=>setTab('clients')}>← Volver</button></div> }
@@ -1831,6 +1946,7 @@ function ClientHistory({appts,setTab,tabExtra}) {
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.serviceNames}</div>
                   {bool(a.domicilio)&&<div style={{fontSize:11,color:'var(--gold)'}}>🛵 Domicilio</div>}
+                  {a.assignedTo&&<div style={{fontSize:11,color:'#B85C6E',marginTop:2}}>👩‍💼 {userNameMap[String(a.assignedTo).trim().toLowerCase()] || String(a.assignedTo).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>}
                 </div>
                 <div style={{textAlign:'right',flexShrink:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:stCfg.col,textDecoration:st==='noshow'?'line-through':''}}>{fmtM(a.totalPrice||a.servicePrice)}</div>
@@ -2245,7 +2361,7 @@ function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm,userNameMap={}}) {
             return <div key={e.id} style={{padding:'8px 0',borderBottom:'1px solid #FBF0F3'}}>
               {isEdit
                 ?<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                  <div><label className="lbl">Descripción</label><input className="inp" value={editData.description||''} onChange={x=>setED(p=>({...p,description:x.target.value}))}/></div>
+                  <div><label className="lbl">Descripción</label><input className="inp" value={editData.description||''} onChange={x=>setED(p=>({...p,description:capFirst(x.target.value)}))}/></div>
                   <div><label className="lbl">Monto</label><input className="inp" type="number" value={editData.amount||''} onChange={x=>setED(p=>({...p,amount:x.target.value}))}/></div>
                   <div><label className="lbl">Cat.</label><input className="inp" list="cats2-d" value={editData.category||''} onChange={x=>setED(p=>({...p,category:x.target.value}))}/><datalist id="cats2-d">{allCats.map(c=><option key={c} value={c}/>)}</datalist></div>
                   <div><label className="lbl">Fecha</label><input type="date" className="inp" value={editData.date||''} onChange={x=>setED(p=>({...p,date:x.target.value}))}/></div>
