@@ -329,8 +329,8 @@ export default function App() {
           ['services',   'stars',  'Servicios',     isAdmin],
           ['finances',   'chart',  'Finanzas',      isAdmin],
           ['reports',    'stats',  'Reportes',      isAdmin],
-          ['settings',   'gear',   'Config',        true],
           ['my-expenses','wallet', 'Mis Gastos',    !isAdmin],
+          ['settings',   'gear',   'Config',        true],
         ].filter(([,,, show])=>show).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setTab(id)} className={`nb${tab===id?' act':''}`}
             style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,paddingTop:9,paddingBottom:9,paddingLeft:12,paddingRight:12}}>
@@ -393,8 +393,8 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
   const [editData, setED2] = useState({})
   const [month, setM]    = useState(today.slice(0,7))
 
-  // Categorías fijas — empleada NO puede crear categorías nuevas
-  const CATS = [...DEF_CATS]
+  // Categorías: las fijas + las que ya existen en cualquier gasto (incluye las que creó la admin)
+  const CATS = [...new Set([...DEF_CATS, ...(Array.isArray(expenses)?expenses:[]).map(e=>e.category).filter(Boolean)])]
   const safe = Array.isArray(visibleExpenses) ? visibleExpenses : []
   const allExpenses = Array.isArray(expenses) ? expenses : []
   const months = [...new Set([...safe.map(e=>cleanDate(e.date).slice(0,7)), today.slice(0,7)].filter(Boolean))].sort((a,b)=>b.localeCompare(a))
