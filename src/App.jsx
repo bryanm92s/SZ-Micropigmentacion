@@ -127,11 +127,75 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ROOT APP
+   THEME — PALETTES + DARK MODE
 ══════════════════════════════════════════════════════════════ */
+const PALETTES = [
+  { id:'rosa',    name:'Rosa Blush',   emoji:'🌸',
+    primary:'#B5524A', pd:'#8E3E38', pl:'#FAEAE8',
+    bg:'#F7F0EC',   card:'#FFFFFF', border:'#E8D0CC',
+    t:'#1E0E0C',    t2:'#7A5E5A' },
+  { id:'morado',  name:'Lavanda',      emoji:'💜',
+    primary:'#7C5CBF', pd:'#5D3F9E', pl:'#EDE8F9',
+    bg:'#F4F0FC',   card:'#FFFFFF', border:'#D8CFF0',
+    t:'#1A0E2E',    t2:'#6B5E8A' },
+  { id:'azul',    name:'Azul Sereno',  emoji:'💙',
+    primary:'#3A6EA8', pd:'#2A5080', pl:'#E3EEF9',
+    bg:'#EFF4FB',   card:'#FFFFFF', border:'#C0D4EC',
+    t:'#0E1A2E',    t2:'#4A6080' },
+  { id:'verde',   name:'Salvia',       emoji:'🌿',
+    primary:'#4A8C6E', pd:'#316650', pl:'#E2F2EA',
+    bg:'#EEF6F1',   card:'#FFFFFF', border:'#BCD9CB',
+    t:'#0E1E16',    t2:'#4A6E5A' },
+  { id:'dorado',  name:'Ámbar',        emoji:'✨',
+    primary:'#C08A2A', pd:'#966A18', pl:'#FBF2DE',
+    bg:'#FBF6EE',   card:'#FFFFFF', border:'#ECCFA0',
+    t:'#2A1A08',    t2:'#7A6030' },
+  { id:'coral',   name:'Coral',        emoji:'🪸',
+    primary:'#C2664A', pd:'#A04830', pl:'#FAECEA',
+    bg:'#FBF1EE',   card:'#FFFFFF', border:'#ECC8BC',
+    t:'#2A0E08',    t2:'#7A4E40' },
+  { id:'teal',    name:'Turquesa',     emoji:'🩵',
+    primary:'#2A8A8A', pd:'#1E6A6A', pl:'#DEF2F2',
+    bg:'#EEF7F7',   card:'#FFFFFF', border:'#B8DEDE',
+    t:'#0A1E1E',    t2:'#3A6E6E' },
+  { id:'carbon',  name:'Carbón',       emoji:'🖤',
+    primary:'#5A5A7A', pd:'#3E3E5E', pl:'#EAEAF2',
+    bg:'#F4F4F8',   card:'#FFFFFF', border:'#CCCCD8',
+    t:'#0E0E18',    t2:'#5A5A6E' },
+]
+
+const DARK_VARS = {
+  bg:'#141218', card:'#1E1B24', border:'#2E2A38',
+  t:'#EDE8F6',  t2:'#9490A8',
+}
+
+const THEME_KEY   = 'sz_theme_palette'
+const DARK_KEY    = 'sz_theme_dark'
+
+function getPalette(id) { return PALETTES.find(p=>p.id===id) || PALETTES[0] }
+
+function ThemeStyle({ paletteId, dark }) {
+  const p = getPalette(paletteId)
+  const bg     = dark ? DARK_VARS.bg     : p.bg
+  const card   = dark ? DARK_VARS.card   : p.card
+  const border = dark ? DARK_VARS.border : p.border
+  const t      = dark ? DARK_VARS.t      : p.t
+  const t2     = dark ? DARK_VARS.t2     : p.t2
+  const inpBg  = dark ? '#2A2638' : 'white'
+  return <style>{`:root{
+    --primary:${p.primary};--primary-d:${p.pd};--primary-l:${p.pl};
+    --bg:${bg};--card:${card};--border:${border};
+    --t:${t};--t2:${t2};
+    --inp-bg:${inpBg};
+    --gold:#C49A1A;--green:#2E7D52;--red:#B03030;
+    --warn-bg:#FFF4DC;--warn-t:#7A5000;
+  }`}</style>
+}
+
+
 export default function App() {
   const [tab,   setTabRaw] = useState('dashboard')
-  const [tabExtra, setTabExtra] = useState(null) // extra state for sub-navigation
+  const [tabExtra, setTabExtra] = useState(null)
   const [clients,  setC]   = useState([])
   const [services, setS]   = useState([])
   const [appts,    setA]   = useState([])
@@ -140,12 +204,17 @@ export default function App() {
   const [status,   setSt]  = useState('loading')
   const [errMsg,   setEM]  = useState('')
   const [lastSync, setLS]  = useState(null)
-  const [modal,    setModal] = useState(null) // {msg, onOk} or {type:'info', msg}
+  const [modal,    setModal] = useState(null)
   const [userEmail,   setUserEmail]  = useState(() => localStorage.getItem(AUTH_KEY) || null)
   const [userRole,    setUserRole]   = useState(() => localStorage.getItem(ROLE_KEY)  || 'Empleada')
   const [userName,    setUserName]   = useState(() => localStorage.getItem(NAME_KEY)   || '')
   const [showChangePw, setShowChangePw] = useState(false)
   const [userMenuOpen, setUserMenuOpen]  = useState(false)
+  const [paletteId, setPaletteId] = useState(() => localStorage.getItem(THEME_KEY) || 'rosa')
+  const [darkMode,  setDarkMode]  = useState(() => localStorage.getItem(DARK_KEY) === 'true')
+
+  const savePalette = id  => { localStorage.setItem(THEME_KEY, id);      setPaletteId(id) }
+  const saveDark    = val => { localStorage.setItem(DARK_KEY,  String(val)); setDarkMode(val) }
 
   const handleLogin  = (email, role='Empleada', name='') => { localStorage.setItem(AUTH_KEY, email); localStorage.setItem(ROLE_KEY, role); localStorage.setItem(NAME_KEY, name); setUserEmail(email); setUserRole(role); setUserName(name) }
   const handleLogout = () => { localStorage.removeItem(AUTH_KEY); localStorage.removeItem(ROLE_KEY); localStorage.removeItem(NAME_KEY); setUserEmail(null); setUserRole('Empleada'); setUserName('') }
@@ -212,7 +281,7 @@ export default function App() {
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
   const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
 
-  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap}
+  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark}
 
   if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>🌸</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
@@ -221,6 +290,8 @@ export default function App() {
     <AuthShell onLogin={handleLogin} onLogout={handleLogout} userEmail={userEmail} userRole={userRole} userName={userName}>
       {showChangePw && <ChangePasswordModal email={userEmail} onClose={()=>setShowChangePw(false)}/>}
     <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",minHeight:'100vh',background:'var(--bg)',color:'var(--t)'}}>
+      <ThemeStyle paletteId={paletteId} dark={darkMode}/>
+      <GS/>
       <GS/>
       {modal?.type==='confirm' && <Modal msg={modal.msg} onOk={()=>{modal.onOk();setModal(null)}} onCancel={()=>setModal(null)}/>}
       {modal?.type==='info'    && <Modal msg={modal.msg} onOk={()=>setModal(null)} okLabel="Entendido" cancelLabel={null}/>}
@@ -251,15 +322,16 @@ export default function App() {
         </div>
       </header>
 
-      <nav style={{background:'white',borderBottom:'1px solid var(--border)',display:'flex',overflowX:'auto',padding:'0 2px',position:'sticky',top:58,zIndex:99,scrollbarWidth:'none'}}>
+      <nav style={{background:'var(--card)',borderBottom:'1px solid var(--border)',display:'flex',overflowX:'auto',padding:'0 2px',position:'sticky',top:58,zIndex:99,scrollbarWidth:'none'}}>
         {[
-          ['dashboard',  'grid',   'Panel',      true],
-          ['appointments','cal',   'Citas',       true],
-          ['clients',    'people', 'Clientes',    true],
-          ['services',   'stars',  'Servicios',   isAdmin],
-          ['finances',   'chart',  'Finanzas',    isAdmin],
-          ['reports',    'stats',  'Reportes',    isAdmin],
-          ['my-expenses','wallet', 'Mis Gastos',  !isAdmin],
+          ['dashboard',  'grid',   'Panel',        true],
+          ['appointments','cal',   'Citas',         true],
+          ['clients',    'people', 'Clientes',      true],
+          ['services',   'stars',  'Servicios',     isAdmin],
+          ['finances',   'chart',  'Finanzas',      isAdmin],
+          ['reports',    'stats',  'Reportes',      isAdmin],
+          ['settings',   'gear',   'Config',        isAdmin],
+          ['my-expenses','wallet', 'Mis Gastos',    !isAdmin],
         ].filter(([,,, show])=>show).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setTab(id)} className={`nb${tab===id?' act':''}`}
             style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,paddingTop:9,paddingBottom:9,paddingLeft:12,paddingRight:12}}>
@@ -282,10 +354,11 @@ export default function App() {
         {tab==='comparison'      && <MonthComparison {...p}/>}
         {tab==='top-services'    && <TopServices     {...p}/>}
         {tab==='reports'         && isAdmin && <ReportsTab {...p}/>}
+        {tab==='settings'        && isAdmin && <SettingsTab {...p}/>}
         {tab==='my-expenses'     && !isAdmin && <MyExpensesTab {...p}/>}
       </main>
 
-      <footer style={{textAlign:'center',padding:'20px 14px 28px',borderTop:'1px solid var(--border)',marginTop:8,background:'white'}}>
+      <footer style={{textAlign:'center',padding:'20px 14px 28px',borderTop:'1px solid var(--border)',marginTop:8,background:'var(--card)'}}>
         <span style={{fontSize:11,color:'var(--t2)',letterSpacing:'.03em',display:'inline-flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'center'}}>
           <span>SZ Micropigmentación</span>
           <span style={{color:'var(--border)'}}>|</span>
@@ -547,6 +620,12 @@ function NavIcon({type, active}) {
         <path d="M6 3h10" stroke={c} strokeWidth="1.8" strokeLinecap="round" opacity=".6"/>
       </svg>
     ),
+    gear: (
+      <svg style={s} width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="11" cy="11" r="3" stroke={c} strokeWidth="1.8" fill="none"/>
+        <path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.22 4.22l1.42 1.42M16.36 16.36l1.42 1.42M4.22 17.78l1.42-1.42M16.36 5.64l1.42-1.42" stroke={c} strokeWidth="1.8" strokeLinecap="round" opacity={active?1:.7}/>
+      </svg>
+    ),
   }
   return icons[type] || null
 }
@@ -577,12 +656,12 @@ function GS() { return <style>{`
   .nb{background:none;border:none;border-bottom:2.5px solid transparent;padding:11px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--t2);white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
   .nb.act{color:var(--primary);border-bottom-color:var(--primary);font-weight:700}
   .card{background:var(--card);border-radius:16px;border:1px solid var(--border);padding:18px;margin-bottom:12px}
-  .inp{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;color:var(--t);background:white;outline:none;font-family:inherit;transition:border-color .15s;-webkit-appearance:none}
+  .inp{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;color:var(--t);background:var(--inp-bg);outline:none;font-family:inherit;transition:border-color .15s;-webkit-appearance:none}
   .inp:focus{border-color:var(--primary)}
   .lbl{display:block;font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
   .btn{background:var(--primary);color:white;border:none;border-radius:10px;padding:12px 22px;font-weight:600;font-size:15px;cursor:pointer;font-family:inherit;transition:background .15s}
   .btn:active{background:var(--primary-d)}.btn:disabled{opacity:.4;cursor:not-allowed}
-  .btn-o{background:white;color:var(--primary);border:1.5px solid var(--primary);border-radius:10px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
+  .btn-o{background:var(--card);color:var(--primary);border:1.5px solid var(--primary);border-radius:10px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
   .btn-sm{background:var(--primary-l);color:var(--primary);border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
   .btn-del{background:#FFF0F0;color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
   .btn-del:active{background:var(--red);color:white}
@@ -594,7 +673,7 @@ function GS() { return <style>{`
   .tag-g{display:inline-block;background:#EDF7F0;color:var(--green);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
   .tag-gold{display:inline-block;background:#FFF5E6;color:var(--gold);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
   .tag-past{display:inline-block;background:#EEE8E6;color:#8A7A78;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
-  .row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #FBF0F3}
+  .row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
   .row:last-child{border-bottom:none}
   .stat{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px 12px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
   .stat:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(196,130,122,0.15)}
@@ -616,8 +695,161 @@ function GS() { return <style>{`
 `}</style> }
 
 /* ══════════════════════════════════════════════════════════════
-   DASHBOARD
+   SETTINGS TAB — Paletas, modo oscuro, reset del sistema
 ══════════════════════════════════════════════════════════════ */
+function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm }) {
+  const [resetInput, setResetInput] = useState('')
+  const [resetDone,  setResetDone]  = useState(false)
+  const [resetStep,  setResetStep]  = useState(0) // 0=idle 1=confirm 2=done
+  const currentPalette = getPalette(paletteId)
+
+  const doReset = async () => {
+    await sync({ clients:[], appointments:[], expenses:[] }, null, null)
+    SC([]); SA([]); SE([])
+    setResetStep(2)
+    setResetInput('')
+  }
+
+  const P = 'var(--primary)'
+  const sectionTitle = (emoji, title) => (
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+      <span style={{fontSize:22}}>{emoji}</span>
+      <div style={{fontFamily:'Georgia,serif',fontSize:18,fontWeight:700,color:'var(--t)'}}>{title}</div>
+    </div>
+  )
+
+  return (
+    <div style={{padding:'0 0 80px'}}>
+      <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:600,color:'var(--t)',marginBottom:4}}>Configuración</div>
+      <div style={{fontSize:13,color:'var(--t2)',marginBottom:20}}>Personaliza la apariencia del sistema</div>
+
+      {/* ── MODO OSCURO/CLARO ── */}
+      <div className="card" style={{marginBottom:12}}>
+        {sectionTitle('🌗', 'Modo de visualización')}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          {[
+            {val:false, label:'Modo claro', icon:'☀️', desc:'Fondo blanco'},
+            {val:true,  label:'Modo oscuro', icon:'🌙', desc:'Fondo oscuro'},
+          ].map(opt => (
+            <button key={String(opt.val)} onClick={()=>saveDark(opt.val)}
+              style={{
+                padding:'16px 12px', borderRadius:14, border:`2px solid ${darkMode===opt.val?'var(--primary)':'var(--border)'}`,
+                background: darkMode===opt.val ? 'var(--primary-l)' : 'var(--card)',
+                cursor:'pointer', textAlign:'center', transition:'all .18s', fontFamily:'inherit',
+              }}>
+              <div style={{fontSize:28,marginBottom:6}}>{opt.icon}</div>
+              <div style={{fontSize:13,fontWeight:700,color:darkMode===opt.val?'var(--primary)':'var(--t)'}}>{opt.label}</div>
+              <div style={{fontSize:11,color:'var(--t2)',marginTop:2}}>{opt.desc}</div>
+              {darkMode===opt.val && <div style={{fontSize:10,color:'var(--primary)',fontWeight:700,marginTop:6}}>✓ Activo</div>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── PALETAS DE COLOR ── */}
+      <div className="card" style={{marginBottom:12}}>
+        {sectionTitle('🎨', 'Paleta de colores')}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
+          {PALETTES.map(pal => {
+            const active = paletteId === pal.id
+            return (
+              <button key={pal.id} onClick={()=>savePalette(pal.id)}
+                style={{
+                  padding:'14px 12px', borderRadius:14,
+                  border:`2.5px solid ${active ? pal.primary : 'var(--border)'}`,
+                  background: active ? (darkMode ? '#2A2638' : pal.pl) : 'var(--card)',
+                  cursor:'pointer', fontFamily:'inherit', transition:'all .18s',
+                  display:'flex', alignItems:'center', gap:10,
+                }}>
+                {/* Color swatch */}
+                <div style={{
+                  width:38, height:38, borderRadius:10, flexShrink:0,
+                  background:`linear-gradient(135deg, ${pal.primary} 50%, ${pal.pd} 100%)`,
+                  boxShadow: active ? `0 3px 10px ${pal.primary}55` : 'none',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:18,
+                }}>{pal.emoji}</div>
+                <div style={{textAlign:'left', minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color: active ? pal.primary : 'var(--t)'}}>{pal.name}</div>
+                  <div style={{fontSize:10,color:'var(--t2)',marginTop:1}}>{pal.primary}</div>
+                  {active && <div style={{fontSize:10,fontWeight:700,color:pal.primary,marginTop:2}}>✓ Activa</div>}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Vista previa */}
+        <div style={{marginTop:16,padding:'14px',borderRadius:14,border:'1px dashed var(--border)',background:'var(--bg)'}}>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:10}}>Vista previa — {currentPalette.name}</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+            <button className="btn" style={{padding:'8px 16px',fontSize:13}}>Botón principal</button>
+            <button className="btn-o" style={{padding:'6px 14px',fontSize:13}}>Secundario</button>
+            <button className="btn-sm">Pequeño</button>
+            <span className="tag">Etiqueta</span>
+            <div style={{width:24,height:24,borderRadius:'50%',background:'var(--primary)',flexShrink:0}}/>
+            <div style={{width:24,height:24,borderRadius:'50%',background:'var(--primary-l)',border:'1.5px solid var(--primary)',flexShrink:0}}/>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RESET DEL SISTEMA ── */}
+      <div className="card" style={{border:'1.5px solid #FFCCCC',background: darkMode ? '#2A1A1A' : '#FFF8F8'}}>
+        {sectionTitle('⚠️', 'Zona de peligro')}
+        <div style={{background: darkMode ? '#3A2020' : '#FFF0F0', borderRadius:12, padding:'14px 16px', marginBottom:14, border:'1px solid #FFB8B8'}}>
+          <div style={{fontWeight:700,fontSize:14,color:'#C03030',marginBottom:4}}>🗑️ Restablecer el sistema</div>
+          <div style={{fontSize:13,color:darkMode?'#CC9090':'#7A3030',lineHeight:1.6}}>
+            Esta acción elimina <strong>permanentemente</strong> todas las citas, clientes y gastos registrados. Los servicios y usuarios <strong>no</strong> se eliminan.
+          </div>
+        </div>
+
+        {resetStep === 0 && (
+          <button onClick={()=>setResetStep(1)}
+            style={{width:'100%',padding:'12px',background:'#C03030',color:'white',border:'none',
+              borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>
+            Restablecer sistema…
+          </button>
+        )}
+
+        {resetStep === 1 && (
+          <div>
+            <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
+              Escribe <strong>CONFIRMAR</strong> para continuar:
+            </div>
+            <input className="inp" value={resetInput}
+              onChange={e=>setResetInput(e.target.value)}
+              placeholder="CONFIRMAR"
+              style={{marginBottom:10, border:'1.5px solid #FFB8B8', letterSpacing:'.1em', fontWeight:700}}
+            />
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>{setResetStep(0);setResetInput('')}}
+                style={{flex:1,padding:'11px',background:'var(--card)',color:'var(--t)',border:'1.5px solid var(--border)',borderRadius:10,fontFamily:'inherit',fontWeight:600,cursor:'pointer',fontSize:14}}>
+                Cancelar
+              </button>
+              <button onClick={doReset} disabled={resetInput !== 'CONFIRMAR'}
+                style={{flex:2,padding:'11px',background:resetInput==='CONFIRMAR'?'#C03030':'#E0A0A0',color:'white',border:'none',
+                  borderRadius:10,fontFamily:'inherit',fontWeight:700,cursor:resetInput==='CONFIRMAR'?'pointer':'not-allowed',fontSize:14}}>
+                Eliminar todo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {resetStep === 2 && (
+          <div style={{textAlign:'center',padding:'16px',background:'#EDF7F0',borderRadius:12,border:'1px solid #B8DEC8'}}>
+            <div style={{fontSize:28,marginBottom:6}}>✅</div>
+            <div style={{fontWeight:700,color:'#2E7D52',fontSize:14}}>Sistema restablecido</div>
+            <div style={{fontSize:12,color:'#4A8C6E',marginTop:4}}>Citas, clientes y gastos eliminados.</div>
+            <button onClick={()=>setResetStep(0)} style={{marginTop:10,padding:'8px 18px',background:'#2E7D52',color:'white',border:'none',borderRadius:8,fontFamily:'inherit',fontWeight:600,cursor:'pointer',fontSize:13}}>
+              Entendido
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function Dashboard({clients,appts,visibleAppts,expenses,setTab,userEmail,isAdmin,userName}) {
   const [selMonth, setSelMonth] = useState(()=>new Date().toISOString().slice(0,7))
   const [finTab,   setFinTab]   = useState('general')
