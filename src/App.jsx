@@ -290,9 +290,8 @@ export default function App() {
     <AuthShell onLogin={handleLogin} onLogout={handleLogout} userEmail={userEmail} userRole={userRole} userName={userName}>
       {showChangePw && <ChangePasswordModal email={userEmail} onClose={()=>setShowChangePw(false)}/>}
     <div style={{fontFamily:"'DM Sans',system-ui,sans-serif",minHeight:'100vh',background:'var(--bg)',color:'var(--t)'}}>
+      <GS/>
       <ThemeStyle paletteId={paletteId} dark={darkMode}/>
-      <GS/>
-      <GS/>
       {modal?.type==='confirm' && <Modal msg={modal.msg} onOk={()=>{modal.onOk();setModal(null)}} onCancel={()=>setModal(null)}/>}
       {modal?.type==='info'    && <Modal msg={modal.msg} onOk={()=>setModal(null)} okLabel="Entendido" cancelLabel={null}/>}
 
@@ -330,7 +329,7 @@ export default function App() {
           ['services',   'stars',  'Servicios',     isAdmin],
           ['finances',   'chart',  'Finanzas',      isAdmin],
           ['reports',    'stats',  'Reportes',      isAdmin],
-          ['settings',   'gear',   'Config',        isAdmin],
+          ['settings',   'gear',   'Config',        true],
           ['my-expenses','wallet', 'Mis Gastos',    !isAdmin],
         ].filter(([,,, show])=>show).map(([id,ic,lb])=>(
           <button key={id} onClick={()=>setTab(id)} className={`nb${tab===id?' act':''}`}
@@ -354,7 +353,7 @@ export default function App() {
         {tab==='comparison'      && <MonthComparison {...p}/>}
         {tab==='top-services'    && <TopServices     {...p}/>}
         {tab==='reports'         && isAdmin && <ReportsTab {...p}/>}
-        {tab==='settings'        && isAdmin && <SettingsTab {...p}/>}
+        {tab==='settings'        && <SettingsTab {...p}/>}
         {tab==='my-expenses'     && !isAdmin && <MyExpensesTab {...p}/>}
       </main>
 
@@ -697,7 +696,7 @@ function GS() { return <style>{`
 /* ══════════════════════════════════════════════════════════════
    SETTINGS TAB — Paletas, modo oscuro, reset del sistema
 ══════════════════════════════════════════════════════════════ */
-function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm }) {
+function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm, isAdmin }) {
   const [resetInput, setResetInput] = useState('')
   const [resetDone,  setResetDone]  = useState(false)
   const [resetStep,  setResetStep]  = useState(0) // 0=idle 1=confirm 2=done
@@ -783,17 +782,25 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
         <div style={{marginTop:16,padding:'14px',borderRadius:14,border:'1px dashed var(--border)',background:'var(--bg)'}}>
           <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:10}}>Vista previa — {currentPalette.name}</div>
           <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
-            <button className="btn" style={{padding:'8px 16px',fontSize:13}}>Botón principal</button>
-            <button className="btn-o" style={{padding:'6px 14px',fontSize:13}}>Secundario</button>
-            <button className="btn-sm">Pequeño</button>
-            <span className="tag">Etiqueta</span>
-            <div style={{width:24,height:24,borderRadius:'50%',background:'var(--primary)',flexShrink:0}}/>
-            <div style={{width:24,height:24,borderRadius:'50%',background:'var(--primary-l)',border:'1.5px solid var(--primary)',flexShrink:0}}/>
+            <button className="btn" style={{padding:'8px 16px',fontSize:13}}>Guardar</button>
+            <button className="btn-o" style={{padding:'6px 14px',fontSize:13}}>Cancelar</button>
+            <button className="btn-sm">Volver</button>
+            <span className="tag">Servicio</span>
+            <span className="tag-g">Completada</span>
+            <div style={{display:'flex',gap:4,marginLeft:4}}>
+              <div style={{width:20,height:20,borderRadius:'50%',background:'var(--primary)'}}/>
+              <div style={{width:20,height:20,borderRadius:'50%',background:'var(--primary-l)',border:'1.5px solid var(--primary)'}}/>
+              <div style={{width:20,height:20,borderRadius:'50%',background:'var(--bg)',border:'1.5px solid var(--border)'}}/>
+            </div>
+          </div>
+          <div style={{marginTop:10,padding:'10px 12px',borderRadius:10,background:'var(--card)',border:'1px solid var(--border)',fontSize:13,color:'var(--t)'}}>
+            Ejemplo de tarjeta — <span style={{color:'var(--primary)',fontWeight:600}}>texto destacado</span> y <span style={{color:'var(--t2)'}}>texto secundario</span>
           </div>
         </div>
       </div>
 
-      {/* ── RESET DEL SISTEMA ── */}
+      {/* ── RESET DEL SISTEMA — solo Administradora ── */}
+      {isAdmin && (
       <div className="card" style={{border:'1.5px solid #FFCCCC',background: darkMode ? '#2A1A1A' : '#FFF8F8'}}>
         {sectionTitle('⚠️', 'Zona de peligro')}
         <div style={{background: darkMode ? '#3A2020' : '#FFF0F0', borderRadius:12, padding:'14px 16px', marginBottom:14, border:'1px solid #FFB8B8'}}>
@@ -846,6 +853,7 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
