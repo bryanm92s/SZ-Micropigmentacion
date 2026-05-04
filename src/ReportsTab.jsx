@@ -99,7 +99,7 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
   const [report,    setReport]    = useState(null)
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState('')
-  const [roleTab,   setRoleTab]   = useState(false)  // toggle: reportes / gestión de accesos
+  const [roleTab,   setRoleTab]   = useState(false)
 
   useEffect(() => { fetchReport(month) }, [month])
 
@@ -112,7 +112,21 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
     finally { setLoading(false) }
   }
 
-  const users  = report?.users || []
+  // Recalcular montoGastos desde el array de gastos actual (no del log de auditoría)
+  // para que refleje ediciones de montos en tiempo real
+  const safeExpenses = Array.isArray(expenses) ? expenses : []
+  const usersRaw = report?.users || []
+  const users = usersRaw.map(u => {
+    const monto = safeExpenses
+      .filter(e => {
+        const d = typeof e.date === 'string' ? e.date : ''
+        return String(e.createdBy||'').trim().toLowerCase() === String(u.email||'').trim().toLowerCase()
+            && d.slice(0,7) === month
+      })
+      .reduce((s,e) => s + Number(String(e.amount||'0').replace(/[^0-9.-]/g,'')), 0)
+    return { ...u, montoGastos: monto }
+  })
+
   const totCitas  = users.reduce((s,u)=>s+u.citas,0)
   const totGastos = users.reduce((s,u)=>s+u.gastos,0)
   const totMonto  = users.reduce((s,u)=>s+u.montoGastos,0)
