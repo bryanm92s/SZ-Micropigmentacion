@@ -186,13 +186,15 @@ function ThemeStyle({ paletteId, dark }) {
   const t      = dark ? DARK_VARS.t      : p.t
   const t2     = dark ? DARK_VARS.t2     : p.t2
   const inpBg  = dark ? '#2A2638' : 'white'
+  const warnBg = dark ? '#3A3010' : '#FFF4DC'
+  const warnT  = dark ? '#E8D080' : '#7A5000'
   return <style>{`:root{
     --primary:${p.primary};--primary-d:${p.pd};--primary-l:${p.pl};
     --bg:${bg};--card:${card};--border:${border};
     --t:${t};--t2:${t2};
     --inp-bg:${inpBg};
     --gold:#C49A1A;--green:#2E7D52;--red:#B03030;
-    --warn-bg:#FFF4DC;--warn-t:#7A5000;
+    --warn-bg:${warnBg};--warn-t:${warnT};
   }
   html { color-scheme: ${dark ? 'dark' : 'light'}; }
   `}</style>

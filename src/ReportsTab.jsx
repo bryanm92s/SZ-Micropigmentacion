@@ -82,22 +82,22 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
           style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
-          <div style={{fontSize:24,fontWeight:800,color:'#D97706'}}>{user.gastos}</div>
-          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'#D97706'}}>→</span>}</div>
+          <div style={{fontSize:24,fontWeight:800,color:'var(--gold)'}}>{user.gastos}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'var(--gold)'}}>→</span>}</div>
         </div>
       </div>
 
       {/* Ingresos y Gastos en dinero */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
         <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
-          <div style={{fontSize:13,fontWeight:800,color:'#2E7D52'}}>${fmt(user.ingresos||0)}</div>
-          <div style={{fontSize:10,color:'#4A8C6E',fontWeight:600,marginTop:2}}>💰 Ingresos</div>
-          <div style={{fontSize:9,color:'#8AB89A',marginTop:1}}>citas completadas</div>
+          <div style={{fontSize:13,fontWeight:800,color:'var(--green)'}}>${fmt(user.ingresos||0)}</div>
+          <div style={{fontSize:10,color:'var(--green)',fontWeight:600,marginTop:2}}>💰 Ingresos</div>
+          <div style={{fontSize:9,color:'var(--t2)',marginTop:1}}>citas completadas</div>
         </div>
         <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
           <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
-          <div style={{fontSize:10,color:'#8A4A55',fontWeight:600,marginTop:2}}>🧾 Gastos</div>
-          <div style={{fontSize:9,color:'#C49090',marginTop:1}}>total registrado</div>
+          <div style={{fontSize:10,color:'var(--primary)',fontWeight:600,marginTop:2}}>🧾 Gastos</div>
+          <div style={{fontSize:9,color:'var(--t2)',marginTop:1}}>total registrado</div>
         </div>
       </div>
 
@@ -338,11 +338,11 @@ function AccessManager({ userEmail, sync }) {
           {busy?'Guardando…':'Actualizar rol'}
         </button>
 
-        <div style={{marginTop:20,padding:'14px',background:'var(--warn-bg)',borderRadius:12,border:'1px solid var(--border)'}}>
-          <div style={{fontSize:12,fontWeight:700,color:'var(--t)',marginBottom:6}}>📋 Diferencia de roles</div>
-          <div style={{fontSize:12,color:'var(--t)',lineHeight:1.7}}>
-            <b>Administradora:</b> acceso total — citas, clientes, servicios, finanzas, reportes<br/>
-            <b>Empleada:</b> citas, clientes, servicios y solo sus propios gastos
+        <div style={{marginTop:20,padding:'14px',background:'var(--primary-l)',borderRadius:12,border:'1px solid var(--border)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--primary)',marginBottom:6}}>📋 Diferencia de roles</div>
+          <div style={{fontSize:12,color:'var(--t)',lineHeight:1.8}}>
+            <span style={{display:'block',marginBottom:4}}>👑 <strong style={{color:'var(--primary)'}}>Administradora:</strong> acceso total — citas, clientes, servicios, finanzas, reportes</span>
+            <span style={{display:'block'}}>👤 <strong style={{color:'var(--t)'}}>Empleada:</strong> citas, clientes, servicios y solo sus propios gastos</span>
           </div>
         </div>
       </div>
