@@ -189,7 +189,9 @@ function ThemeStyle({ paletteId, dark }) {
     --inp-bg:${inpBg};
     --gold:#C49A1A;--green:#2E7D52;--red:#B03030;
     --warn-bg:#FFF4DC;--warn-t:#7A5000;
-  }`}</style>
+  }
+  html { color-scheme: ${dark ? 'dark' : 'light'}; }
+  `}</style>
 }
 
 
@@ -250,7 +252,13 @@ export default function App() {
     const km={clients:'sb_c',services:'sb_s',appointments:'sb_a',expenses:'sb_e'}
     Object.entries(payload).forEach(([k,v])=>{if(km[k])try{localStorage.setItem(km[k],JSON.stringify(v))}catch{}})
     setSt('saving')
-    try { const r=await saveData(payload, userEmail); setSt('ok'); setLS(new Date()); return r }
+    try {
+      const r=await saveData(payload, userEmail)
+      setSt('ok'); setLS(new Date())
+      // Refresh silently after save so all clients see latest data
+      setTimeout(()=>refresh(true), 800)
+      return r
+    }
     catch(e) { setEM(e.message); setSt('error'); setTimeout(()=>setSt('ok'),5000); return null }
   }, [userEmail])
 
@@ -311,9 +319,9 @@ export default function App() {
               👤 <span style={{maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11}}>{userName || (userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>
             </button>
             {userMenuOpen && (
-              <div style={{position:'absolute',right:0,top:'calc(100% + 8px)',background:'white',borderRadius:12,boxShadow:'0 4px 24px rgba(0,0,0,.15)',padding:'8px',minWidth:180,zIndex:200}} onClick={()=>setUserMenuOpen(false)}>
-                <div style={{fontSize:11,color:'#999',padding:'4px 10px 8px',borderBottom:'1px solid #f0e8e8',marginBottom:6}}>{userName && <strong style={{display:'block',color:'#555',fontSize:12}}>{userName}</strong>}{userEmail}</div>
-                <button onClick={()=>setShowChangePw(true)} style={{width:'100%',textAlign:'left',background:'none',border:'none',padding:'9px 12px',fontSize:14,cursor:'pointer',fontFamily:'inherit',borderRadius:8,color:'#333',fontWeight:500}}>🔑 Cambiar contraseña</button>
+              <div style={{position:'absolute',right:0,top:'calc(100% + 8px)',background:'var(--card)',borderRadius:12,boxShadow:'0 4px 24px rgba(0,0,0,.15)',padding:'8px',minWidth:180,zIndex:200}} onClick={()=>setUserMenuOpen(false)}>
+                <div style={{fontSize:11,color:'var(--t2)',padding:'4px 10px 8px',borderBottom:'1px solid #f0e8e8',marginBottom:6}}>{userName && <strong style={{display:'block',color:'var(--t)',fontSize:12}}>{userName}</strong>}{userEmail}</div>
+                <button onClick={()=>setShowChangePw(true)} style={{width:'100%',textAlign:'left',background:'none',border:'none',padding:'9px 12px',fontSize:14,cursor:'pointer',fontFamily:'inherit',borderRadius:8,color:'var(--t)',fontWeight:500}}>🔑 Cambiar contraseña</button>
                 <button onClick={handleLogout} style={{width:'100%',textAlign:'left',background:'none',border:'none',padding:'9px 12px',fontSize:14,cursor:'pointer',fontFamily:'inherit',borderRadius:8,color:'#B85C6E',fontWeight:600}}>🚪 Cerrar sesión</button>
               </div>
             )}
@@ -422,7 +430,7 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
   return (
     <div style={{padding:'0 16px 80px'}}>
       <div style={{fontFamily:'Georgia,serif',fontSize:22,fontWeight:600,color:'var(--t)',marginBottom:4}}>Mis Gastos</div>
-      <div style={{fontSize:13,color:'#aaa',marginBottom:16}}>Solo ves y gestionas los gastos que tú registraste</div>
+      <div style={{fontSize:13,color:'var(--t2)',marginBottom:16}}>Solo ves y gestionas los gastos que tú registraste</div>
 
       {/* Selector de mes */}
       <div style={{marginBottom:14}}>
@@ -435,10 +443,10 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
       {/* Total */}
       <div style={{background:PL,borderRadius:14,padding:'16px 20px',marginBottom:20,display:'flex',justifyContent:'space-between',alignItems:'center',border:`1px solid ${PB}`}}>
         <div>
-          <div style={{fontSize:11,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'.06em'}}>Total del mes</div>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.06em'}}>Total del mes</div>
           <div style={{fontSize:28,fontWeight:800,color:P,letterSpacing:'-1px'}}>{fmtM2(total)}</div>
         </div>
-        <div style={{fontSize:11,color:'#bbb',textAlign:'right'}}>{me.length} gasto{me.length!==1?'s':''}</div>
+        <div style={{fontSize:11,color:'var(--t2)',textAlign:'right'}}>{me.length} gasto{me.length!==1?'s':''}</div>
       </div>
 
       {/* Formulario nuevo gasto */}
@@ -480,7 +488,7 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
 
       {/* Lista */}
       {me.length===0 ? (
-        <div style={{textAlign:'center',padding:'40px',color:'#ccc'}}>
+        <div style={{textAlign:'center',padding:'40px',color:'var(--t2)'}}>
           <div style={{fontSize:32,marginBottom:8}}>🧾</div>
           <div>No hay gastos en este mes</div>
         </div>
@@ -522,7 +530,7 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
                 ) : (
                   <div style={{display:'flex',alignItems:'center',gap:8}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:13,color:'#222',marginBottom:2}}>{e.description}</div>
+                      <div style={{fontWeight:600,fontSize:13,color:'var(--t)',marginBottom:2}}>{e.description}</div>
                       <div style={{fontSize:11,color:'var(--t2)'}}>{e.category} · {fmtDate(e.date)}</div>
                     </div>
                     <span style={{fontWeight:700,color:P,fontSize:14,flexShrink:0}}>{fmtM2(e.amount)}</span>
@@ -542,7 +550,7 @@ function MyExpensesTab({expenses, visibleExpenses, SE, confirm, userEmail}) {
 function Modal({msg, onOk, onCancel, okLabel='Eliminar', cancelLabel='Cancelar'}) {
   return (
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:999,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{background:'white',borderRadius:20,padding:28,maxWidth:340,width:'100%',textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+      <div style={{background:'var(--card)',borderRadius:20,padding:28,maxWidth:340,width:'100%',textAlign:'center',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
         <div style={{fontSize:36,marginBottom:12}}>⚠️</div>
         <div style={{fontSize:15,fontWeight:600,color:'var(--t)',marginBottom:18,lineHeight:1.5}}>{msg}</div>
         <div style={{display:'flex',gap:10,justifyContent:'center'}}>
@@ -662,16 +670,16 @@ function GS() { return <style>{`
   .btn:active{background:var(--primary-d)}.btn:disabled{opacity:.4;cursor:not-allowed}
   .btn-o{background:var(--card);color:var(--primary);border:1.5px solid var(--primary);border-radius:10px;padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit}
   .btn-sm{background:var(--primary-l);color:var(--primary);border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-del{background:#FFF0F0;color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-del{background:var(--primary-l);color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
   .btn-del:active{background:var(--red);color:white}
   .btn-wa{background:#25D366;color:white;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-edit{background:#F0EFF8;color:#6060B0;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-check{background:white;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-  .btn-check.done{background:#EDF7F0;border-color:var(--green);color:var(--green)}
+  .btn-edit{background:var(--primary-l);color:var(--primary-d);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-check{background:var(--card);border:1.5px solid var(--border);color:var(--t2);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+  .btn-check.done{background:var(--primary-l);border-color:var(--green);color:var(--green)}
   .tag{display:inline-block;background:var(--primary-l);color:var(--primary);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
-  .tag-g{display:inline-block;background:#EDF7F0;color:var(--green);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
-  .tag-gold{display:inline-block;background:#FFF5E6;color:var(--gold);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
-  .tag-past{display:inline-block;background:#EEE8E6;color:#8A7A78;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+  .tag-g{display:inline-block;background:var(--primary-l);color:var(--green);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+  .tag-gold{display:inline-block;background:var(--primary-l);color:var(--gold);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+  .tag-past{display:inline-block;background:var(--border);color:var(--t2);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
   .row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
   .row:last-child{border-bottom:none}
   .stat{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px 12px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
@@ -923,7 +931,7 @@ function Dashboard({clients,appts,visibleAppts,expenses,setTab,userEmail,isAdmin
     </div>
 
     {isAdmin && <div className="card" style={{marginBottom:14,padding:0,overflow:'hidden'}}>
-      <div style={{background:netoPos?'linear-gradient(135deg,var(--primary),var(--primary-d))':'linear-gradient(135deg,#B04040,#843030)',padding:'16px 18px',cursor:'pointer'}} onClick={()=>setTab('finances')}>
+      <div style={{background:netoPos?'linear-gradient(135deg,var(--primary),var(--primary-d))':'linear-gradient(135deg,var(--red),#843030)',padding:'16px 18px',cursor:'pointer'}} onClick={()=>setTab('finances')}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
           <div style={{fontSize:10,color:'rgba(255,255,255,0.8)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.09em'}}>
             {isMonth?'Balance \u2014 '+new Date(selMonth+'-01T12:00:00').toLocaleDateString('es-CO',{month:'long',year:'numeric'}):'Balance Neto'}
@@ -946,9 +954,9 @@ function Dashboard({clients,appts,visibleAppts,expenses,setTab,userEmail,isAdmin
       </div>
 
       {isMonth&&(
-        <div style={{padding:'10px 16px 0',background:'white'}}>
+        <div style={{padding:'10px 16px 0',background:'var(--card)'}}>
           <select value={selMonth} onChange={e=>setSelMonth(e.target.value)}
-            style={{width:'100%',border:'1.5px solid var(--border)',borderRadius:8,padding:'7px 12px',fontSize:13,fontFamily:'inherit',color:'var(--t)',background:'white',outline:'none',cursor:'pointer'}}>
+            style={{width:'100%',border:'1.5px solid var(--border)',borderRadius:8,padding:'7px 12px',fontSize:13,fontFamily:'inherit',color:'var(--t)',background:'var(--card)',outline:'none',cursor:'pointer'}}>
             {months.map(m=><option key={m} value={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('es-CO',{month:'long',year:'numeric'})}</option>)}
           </select>
         </div>
@@ -1027,7 +1035,7 @@ function MonthlyIncomeState({appts,selMonth,setSelMonth,setTab}) {
           {'\uD83D\uDCCA'} Estado de ingresos por mes
         </span>
         <select value={selMonth} onChange={e=>setSelMonth(e.target.value)}
-          style={{border:'1.5px solid var(--border)',borderRadius:8,padding:'4px 10px',fontSize:12,fontFamily:'inherit',color:'var(--t)',background:'white',outline:'none',cursor:'pointer'}}>
+          style={{border:'1.5px solid var(--border)',borderRadius:8,padding:'4px 10px',fontSize:12,fontFamily:'inherit',color:'var(--t)',background:'var(--card)',outline:'none',cursor:'pointer'}}>
           {months.map(m=><option key={m} value={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('es-CO',{month:'short',year:'numeric'})}</option>)}
         </select>
       </div>
@@ -1093,7 +1101,7 @@ function MonthlyBalance({appts,expenses,selMonth,setSelMonth,setTab}) {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
         <span style={{fontWeight:700,fontSize:14,color:'var(--t)'}}>📅 Balance por mes</span>
         <select value={selMonth} onChange={e=>setSelMonth(e.target.value)}
-          style={{border:'1.5px solid var(--border)',borderRadius:8,padding:'4px 10px',fontSize:12,fontFamily:'inherit',color:'var(--t)',background:'white',outline:'none',cursor:'pointer'}}>
+          style={{border:'1.5px solid var(--border)',borderRadius:8,padding:'4px 10px',fontSize:12,fontFamily:'inherit',color:'var(--t)',background:'var(--card)',outline:'none',cursor:'pointer'}}>
           {months.map(m=><option key={m} value={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('es-CO',{month:'short',year:'numeric'})}</option>)}
         </select>
       </div>
@@ -1233,13 +1241,19 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
   const dom    = bool(appt.domicilio)
   const status = appt.completed==='noshow' ? 'noshow' : bool(appt.completed) ? 'done' : 'pending'
   const past   = isPastAppt(appt)
-  const bgMap  = {done:'#F0FFF8', noshow:'#FFF4F0', pending: past?'#F5F0EE':'white'}
-  const brdMap = {done:'#B0DDC0', noshow:'#F5C0B0', pending: past?'#E0D8D5':'var(--border)'}
+  const bgMap  = {done:'var(--done-bg,#F0FFF8)', noshow:'var(--noshow-bg,#FFF4F0)', pending: past?'var(--card)':'var(--card)'}
+  const brdMap = {done:'var(--green)', noshow:'var(--red)', pending: 'var(--border)'}
+  const resolvedCreatedBy = appt.createdBy
+    ? (userNameMap[String(appt.createdBy).trim().toLowerCase()] || String(appt.createdBy).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
+    : null
+  const resolvedAtendida = appt.assignedTo
+    ? (userNameMap[String(appt.assignedTo).trim().toLowerCase()] || String(appt.assignedTo).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
+    : null
   return (
-    <div style={{background:bgMap[status],borderRadius:12,border:`1px solid ${brdMap[status]}`,padding:14,marginTop:8}}>
+    <div style={{background:bgMap[status],borderRadius:12,border:`1.5px solid ${brdMap[status]}`,padding:14,marginTop:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
         <div>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:1}}>{appt.clientName}</div>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:1,color:'var(--t)'}}>{appt.clientName}</div>
           <div style={{fontSize:12,color:'var(--t2)'}}>📱 {appt.clientPhone}</div>
         </div>
         <div style={{textAlign:'right'}}>
@@ -1247,26 +1261,32 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
             {status==='noshow' ? <span style={{textDecoration:'line-through',opacity:.6}}>{fmtM(appt.totalPrice||appt.servicePrice)}</span> : fmtM(appt.totalPrice||appt.servicePrice)}
           </div>
           {dom && <div style={{fontSize:11,color:'var(--gold)'}}>🛵 +{fmtM(appt.domicilioPrice)}</div>}
-          <div style={{fontSize:10,color:calOk?'var(--green)':'#ccc',marginTop:1}}>{calOk?'📅 Cal':'📅 —'}</div>
+          <div style={{fontSize:10,color:calOk?'var(--green)':'var(--t2)',marginTop:1}}>{calOk?'📅 Cal':'📅 —'}</div>
         </div>
       </div>
-      <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+      <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:8}}>
         <span className="tag" style={{fontSize:11}}>✨ {appt.serviceNames}</span>
         <span className="tag" style={{fontSize:11}}>📅 {fmtDate(appt.date)}</span>
         <span className="tag" style={{fontSize:11}}>🕐 {fmtTime(appt.time)}</span>
-        {appt.assignedTo && <span className="tag" style={{fontSize:11}}>👩‍💼 {userNameMap[String(appt.assignedTo).trim().toLowerCase()] || (appt.assignedTo||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>}
         {dom && <span className="tag-gold" style={{fontSize:11}}>🛵 Domicilio</span>}
         {status==='done'   && <span className="tag-g"    style={{fontSize:11}}>✓ Completada</span>}
-        {status==='noshow' && <span style={{display:'inline-block',background:'#FFF0EC',color:'var(--red)',borderRadius:20,padding:'2px 10px',fontSize:12,fontWeight:600}}>✗ No asistió</span>}
+        {status==='noshow' && <span style={{display:'inline-block',background:'var(--primary-l)',color:'var(--red)',borderRadius:20,padding:'2px 10px',fontSize:12,fontWeight:600}}>✗ No asistió</span>}
         {status==='pending'&& past && <span className="tag-past" style={{fontSize:11}}>● Pasada</span>}
       </div>
+      {/* Creada por / Atendida por */}
+      {(resolvedCreatedBy || resolvedAtendida) && (
+        <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:8,padding:'6px 10px',background:'var(--bg)',borderRadius:8,border:'1px solid var(--border)'}}>
+          {resolvedCreatedBy && <span style={{fontSize:11,color:'var(--t2)'}}>✏️ <strong style={{color:'var(--t)'}}>Creada por:</strong> {resolvedCreatedBy}</span>}
+          {resolvedAtendida  && <span style={{fontSize:11,color:'var(--t2)'}}>👩‍💼 <strong style={{color:'var(--t)'}}>Atendida por:</strong> {resolvedAtendida}</span>}
+        </div>
+      )}
       <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
         <button className={`btn-check${status==='done'?' done':''}`} onClick={()=>onToggle('done')}
           style={status==='done'?{}:{opacity: status==='noshow'?.5:1}}>
           {status==='done'?'✓ Completada':'✓ Completada'}
         </button>
         <button onClick={()=>onToggle('noshow')}
-          style={{background:status==='noshow'?'var(--red)':'#FFF4F0',color:status==='noshow'?'white':'var(--red)',border:`1.5px solid ${status==='noshow'?'var(--red)':'#F5C0B0'}`,borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s',opacity: status==='done'?.5:1}}>
+          style={{background:status==='noshow'?'var(--red)':'var(--primary-l)',color:status==='noshow'?'white':'var(--red)',border:`1.5px solid ${status==='noshow'?'var(--red)':'var(--border)'}`,borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s',opacity: status==='done'?.5:1}}>
           ✗ No asistió
         </button>
         {status==='pending' && <button className="btn-wa" onClick={()=>openWA(appt.clientPhone,appt.clientName,appt.time,appt.date,appt.serviceNames,appt.totalPrice||appt.servicePrice,dom)}>💬 Recordatorio</button>}
@@ -1453,7 +1473,7 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
         ) : (
           <input className="inp" value={
             (userNameMap||{})[String(userEmail||'').trim().toLowerCase()] || userEmail || ''
-          } disabled style={{fontSize:13,background:'#f5f5f5',color:'#888',cursor:'not-allowed'}}/>
+          } disabled style={{fontSize:13,background:'#f5f5f5',color:'var(--t2)',cursor:'not-allowed'}}/>
         )}
       </div>
 
@@ -1743,7 +1763,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
           <input className="inp"
             value={userName || (userEmail||'').split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
             disabled
-            style={{fontSize:13, background:'#f5f5f5', color:'#888', cursor:'not-allowed'}}
+            style={{fontSize:13, background:'#f5f5f5', color:'var(--t2)', cursor:'not-allowed'}}
           />
         )}
       </div>
@@ -2294,7 +2314,7 @@ function MonthComparison({appts,expenses,setTab}) {
           {key:'cardA',m:mA,d:dA,col:'var(--primary)'},
           {key:'cardB',m:mB,d:dB,col:'var(--gold)'},
         ].map(({key,m,d,col})=>(
-          <div key={key} style={{background:'white',borderRadius:14,border:`2px solid ${col}`,padding:'14px 12px'}}>
+          <div key={key} style={{background:'var(--card)',borderRadius:14,border:`2px solid ${col}`,padding:'14px 12px'}}>
             <div style={{fontSize:10,color:col,fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:6}}>{monthLabel(m)}</div>
             <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0',borderBottom:'1px solid var(--border)'}}><span style={{color:'var(--t2)'}}>Recibido</span><span style={{fontWeight:700,color:'var(--green)'}}>{fmtM(d.recv)}</span></div>
             <div style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0',borderBottom:'1px solid var(--border)'}}><span style={{color:'var(--t2)'}}>Gastos</span><span style={{fontWeight:700,color:'var(--red)'}}>{fmtM(d.exp)}</span></div>
@@ -2501,7 +2521,7 @@ function IncomeDetail({appts,setTab,tabExtra}) {
               </div>
               <div style={{flexShrink:0,textAlign:'right'}}>
                 {isNoShow ? <>
-                  <div style={{fontWeight:700,color:'#ccc',fontSize:13,textDecoration:'line-through'}}>{fmtM(precio)}</div>
+                  <div style={{fontWeight:700,color:'var(--t2)',fontSize:13,textDecoration:'line-through'}}>{fmtM(precio)}</div>
                   <div style={{fontSize:10,color:'var(--red)',fontWeight:600}}>No asistió</div>
                 </> : <>
                   <div style={{fontWeight:700,color:isDone?'var(--green)':'var(--gold)',fontSize:13}}>{fmtM(precio)}</div>

@@ -35,10 +35,10 @@ const userInitial = user => {
 /* ── Stat card ── */
 function StatCard({ label, value, sub, color='#B85C6E' }) {
   return (
-    <div style={{background:'white',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 12px rgba(180,92,110,.08)',flex:1,minWidth:130}}>
-      <div style={{fontSize:11,fontWeight:700,color:'#999',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:6}}>{label}</div>
+    <div style={{background:'var(--card)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 12px rgba(180,92,110,.08)',flex:1,minWidth:130}}>
+      <div style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:6}}>{label}</div>
       <div style={{fontSize:26,fontWeight:800,color,letterSpacing:'-1px'}}>{value}</div>
-      {sub && <div style={{fontSize:12,color:'#aaa',marginTop:3}}>{sub}</div>}
+      {sub && <div style={{fontSize:12,color:'var(--t2)',marginTop:3}}>{sub}</div>}
     </div>
   )
 }
@@ -49,7 +49,7 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
   const netoPos = neto >= 0
   return (
     <div style={{
-      background:'white', borderRadius:16, padding:'20px',
+      background:'var(--card)', borderRadius:16, padding:'20px',
       boxShadow:'0 2px 16px rgba(0,0,0,.06)',
       border: isCurrentUser ? `2px solid ${color}` : '2px solid transparent',
     }}>
@@ -61,10 +61,10 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
           fontWeight:800,fontSize:18,flexShrink:0,
         }}>{userInitial(user)}</div>
         <div style={{minWidth:0}}>
-          <div style={{fontWeight:700,fontSize:14,color:'#222',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+          <div style={{fontWeight:700,fontSize:14,color:'var(--t)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
             {user.name || user.email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
           </div>
-          <div style={{fontSize:11,color:'#aaa',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
+          <div style={{fontSize:11,color:'var(--t2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
         </div>
         {isCurrentUser && <span style={{marginLeft:'auto',background:PL,color:P,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:20,flexShrink:0}}>Tú</span>}
       </div>
@@ -76,25 +76,25 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
           onMouseEnter={e=>{if(onGoCitas)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:24,fontWeight:800,color:P}}>{user.citas}</div>
-          <div style={{fontSize:10,color:'#888',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{color:P}}>→</span>}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{color:P}}>→</span>}</div>
         </div>
         <div onClick={onGoGastos}
-          style={{background:'#FEF9F0',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
+          style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:24,fontWeight:800,color:'#D97706'}}>{user.gastos}</div>
-          <div style={{fontSize:10,color:'#888',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'#D97706'}}>→</span>}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'#D97706'}}>→</span>}</div>
         </div>
       </div>
 
       {/* Ingresos y Gastos en dinero */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
-        <div style={{background:'#EDF7F0',borderRadius:10,padding:'10px',textAlign:'center'}}>
+        <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
           <div style={{fontSize:13,fontWeight:800,color:'#2E7D52'}}>${fmt(user.ingresos||0)}</div>
           <div style={{fontSize:10,color:'#4A8C6E',fontWeight:600,marginTop:2}}>💰 Ingresos</div>
           <div style={{fontSize:9,color:'#8AB89A',marginTop:1}}>citas completadas</div>
         </div>
-        <div style={{background:'#FFF1F3',borderRadius:10,padding:'10px',textAlign:'center'}}>
+        <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
           <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
           <div style={{fontSize:10,color:'#8A4A55',fontWeight:600,marginTop:2}}>🧾 Gastos</div>
           <div style={{fontSize:9,color:'#C49090',marginTop:1}}>total registrado</div>
@@ -184,7 +184,7 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
     <div style={{padding:'0 0 80px'}}>
 
       {/* Tabs internas */}
-      <div style={{display:'flex',gap:0,background:'white',borderBottom:'1px solid #F0E8E8',marginBottom:20,position:'sticky',top:108,zIndex:90}}>
+      <div style={{display:'flex',gap:0,background:'var(--card)',borderBottom:'1px solid #F0E8E8',marginBottom:20,position:'sticky',top:108,zIndex:90}}>
         {[['reportes','📊 Reportes'],['accesos','👥 Accesos']].map(([id,lb])=>(
           <button key={id} onClick={()=>setRoleTab(id==='accesos')}
             style={{flex:1,padding:'13px',border:'none',borderBottom:`2.5px solid ${(id==='accesos')===roleTab?P:'transparent'}`,
@@ -200,11 +200,11 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
         <div style={{padding:'0 16px'}}>
           {/* Selector de mes */}
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,gap:12}}>
-            <div style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:700,color:'#222'}}>
+            <div style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:700,color:'var(--t)'}}>
               Actividad del equipo
             </div>
             <select value={month} onChange={e=>setMonth(e.target.value)}
-              style={{border:`1.5px solid ${PB}`,borderRadius:10,padding:'8px 12px',fontFamily:'inherit',fontSize:13,color:'#444',background:'white',outline:'none',cursor:'pointer'}}>
+              style={{border:'1.5px solid var(--border)',borderRadius:10,padding:'8px 12px',fontFamily:'inherit',fontSize:13,color:'var(--t)',background:'var(--card)',outline:'none',cursor:'pointer'}}>
               {months.map(m=>(
                 <option key={m} value={m}>{monthLabel(m)}</option>
               ))}
@@ -212,10 +212,10 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
           </div>
 
           {loading && (
-            <div style={{textAlign:'center',padding:'40px',color:'#ccc',fontSize:14}}>Cargando reporte…</div>
+            <div style={{textAlign:'center',padding:'40px',color:'var(--t2)',fontSize:14}}>Cargando reporte…</div>
           )}
           {error && (
-            <div style={{background:'#FEE2E2',color:'#B91C1C',borderRadius:12,padding:'12px 16px',marginBottom:16,fontSize:13}}>{error}</div>
+            <div style={{background:'var(--primary-l)',color:'var(--red)',borderRadius:12,padding:'12px 16px',marginBottom:16,fontSize:13}}>{error}</div>
           )}
 
           {!loading && !error && (
@@ -229,10 +229,10 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
               </div>
 
               {users.length === 0 ? (
-                <div style={{textAlign:'center',padding:'48px 20px',color:'#ccc'}}>
+                <div style={{textAlign:'center',padding:'48px 20px',color:'var(--t2)'}}>
                   <div style={{fontSize:36,marginBottom:12}}>📭</div>
                   <div style={{fontSize:14}}>Sin actividad registrada en {monthLabel(month)}</div>
-                  <div style={{fontSize:12,marginTop:4,color:'#ddd'}}>Los movimientos se registran automáticamente desde la app</div>
+                  <div style={{fontSize:12,marginTop:4,color:'var(--t2)'}}>Los movimientos se registran automáticamente desde la app</div>
                 </div>
               ) : (
                 <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
@@ -284,24 +284,24 @@ function AccessManager({ userEmail, sync }) {
   }
 
   const inp = {
-    width:'100%',padding:'11px 14px',border:`1.5px solid ${PB}`,
+    width:'100%',padding:'11px 14px',border:'1.5px solid var(--border)',
     borderRadius:10,fontSize:14,fontFamily:'inherit',
-    background:'white',outline:'none',boxSizing:'border-box',
+    background:'var(--card)',outline:'none',boxSizing:'border-box',
   }
 
   return (
     <div style={{padding:'0 16px'}}>
-      <div style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:700,color:'#222',marginBottom:6}}>Gestión de accesos</div>
-      <div style={{fontSize:13,color:'#999',marginBottom:20}}>
+      <div style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:700,color:'var(--t)',marginBottom:6}}>Gestión de accesos</div>
+      <div style={{fontSize:13,color:'var(--t2)',marginBottom:20}}>
         Para autorizar a un nuevo usuario, primero agrega su correo en la hoja "Usuarios" de Google Sheets,
         luego asígnale el rol aquí.
       </div>
 
-      <div style={{background:'white',borderRadius:16,padding:'20px',boxShadow:'0 2px 12px rgba(0,0,0,.06)'}}>
-        <div style={{fontSize:13,fontWeight:700,color:'#555',marginBottom:14}}>Cambiar rol de usuario</div>
+      <div style={{background:'var(--card)',borderRadius:16,padding:'20px',boxShadow:'0 2px 12px rgba(0,0,0,.06)'}}>
+        <div style={{fontSize:13,fontWeight:700,color:'var(--t)',marginBottom:14}}>Cambiar rol de usuario</div>
 
         <div style={{marginBottom:12}}>
-          <label style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:5}}>
+          <label style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:5}}>
             Correo del usuario
           </label>
           <input value={newEmail} onChange={e=>setNewEmail(e.target.value)}
@@ -309,14 +309,14 @@ function AccessManager({ userEmail, sync }) {
         </div>
 
         <div style={{marginBottom:16}}>
-          <label style={{fontSize:11,fontWeight:700,color:'#888',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:5}}>
+          <label style={{fontSize:11,fontWeight:700,color:'var(--t2)',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:5}}>
             Rol
           </label>
           <div style={{display:'flex',gap:10}}>
             {['Administradora','Empleada'].map(r=>(
               <button key={r} onClick={()=>setNewRole(r)}
                 style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${newRole===r?P:PB}`,
-                  background:newRole===r?PL:'white',color:newRole===r?P:'#666',
+                  background:newRole===r?PL:'var(--card)',color:newRole===r?P:'var(--t2)',
                   fontFamily:'inherit',fontSize:13,fontWeight:700,cursor:'pointer',transition:'all .15s'}}>
                 {r==='Administradora'?'👑 Administradora':'👤 Empleada'}
               </button>
@@ -338,9 +338,9 @@ function AccessManager({ userEmail, sync }) {
           {busy?'Guardando…':'Actualizar rol'}
         </button>
 
-        <div style={{marginTop:20,padding:'14px',background:'#FFFBEB',borderRadius:12,border:'1px solid #FDE68A'}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#92400E',marginBottom:6}}>📋 Diferencia de roles</div>
-          <div style={{fontSize:12,color:'#78350F',lineHeight:1.7}}>
+        <div style={{marginTop:20,padding:'14px',background:'var(--warn-bg)',borderRadius:12,border:'1px solid var(--border)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--t)',marginBottom:6}}>📋 Diferencia de roles</div>
+          <div style={{fontSize:12,color:'var(--t)',lineHeight:1.7}}>
             <b>Administradora:</b> acceso total — citas, clientes, servicios, finanzas, reportes<br/>
             <b>Empleada:</b> citas, clientes, servicios y solo sus propios gastos
           </div>
