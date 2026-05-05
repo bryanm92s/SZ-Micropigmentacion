@@ -45,13 +45,16 @@ function StatCard({ label, value, sub, color='#B85C6E' }) {
 
 /* ── Tarjeta de usuario ── */
 function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
+  const neto = (user.ingresos||0) - (user.montoGastos||0)
+  const netoPos = neto >= 0
   return (
     <div style={{
-      background:'white',borderRadius:16,padding:'20px',
+      background:'white', borderRadius:16, padding:'20px',
       boxShadow:'0 2px 16px rgba(0,0,0,.06)',
       border: isCurrentUser ? `2px solid ${color}` : '2px solid transparent',
     }}>
-      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
         <div style={{
           width:42,height:42,borderRadius:'50%',background:color,
           color:'white',display:'flex',alignItems:'center',justifyContent:'center',
@@ -65,24 +68,53 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
         </div>
         {isCurrentUser && <span style={{marginLeft:'auto',background:PL,color:P,fontSize:10,fontWeight:700,padding:'3px 8px',borderRadius:20,flexShrink:0}}>Tú</span>}
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div onClick={onGoCitas} style={{background:PL,borderRadius:10,padding:'12px',textAlign:'center',cursor:onGoCitas?'pointer':'default',transition:'opacity .15s'}}
+
+      {/* Citas y Gastos — clickeables */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+        <div onClick={onGoCitas}
+          style={{background:PL,borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoCitas?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoCitas)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
-          <div style={{fontSize:28,fontWeight:800,color:P}}>{user.citas}</div>
-          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{fontSize:10,color:P}}>→</span>}</div>
+          <div style={{fontSize:24,fontWeight:800,color:P}}>{user.citas}</div>
+          <div style={{fontSize:10,color:'#888',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{color:P}}>→</span>}</div>
         </div>
-        <div onClick={onGoGastos} style={{background:'#FEF9F0',borderRadius:10,padding:'12px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
+        <div onClick={onGoGastos}
+          style={{background:'#FEF9F0',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
-          <div style={{fontSize:28,fontWeight:800,color:'#D97706'}}>{user.gastos}</div>
-          <div style={{fontSize:11,color:'#888',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{fontSize:10,color:'#D97706'}}>→</span>}</div>
+          <div style={{fontSize:24,fontWeight:800,color:'#D97706'}}>{user.gastos}</div>
+          <div style={{fontSize:10,color:'#888',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'#D97706'}}>→</span>}</div>
         </div>
       </div>
-      {user.montoGastos > 0 && (
-        <div style={{marginTop:10,background:'#FFF1F3',borderRadius:10,padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <span style={{fontSize:12,color:'#888',fontWeight:600}}>Total en gastos</span>
-          <span style={{fontSize:14,fontWeight:800,color:P}}>${fmt(user.montoGastos)}</span>
+
+      {/* Ingresos y Gastos en dinero */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+        <div style={{background:'#EDF7F0',borderRadius:10,padding:'10px',textAlign:'center'}}>
+          <div style={{fontSize:13,fontWeight:800,color:'#2E7D52'}}>${fmt(user.ingresos||0)}</div>
+          <div style={{fontSize:10,color:'#4A8C6E',fontWeight:600,marginTop:2}}>💰 Ingresos</div>
+          <div style={{fontSize:9,color:'#8AB89A',marginTop:1}}>citas completadas</div>
+        </div>
+        <div style={{background:'#FFF1F3',borderRadius:10,padding:'10px',textAlign:'center'}}>
+          <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
+          <div style={{fontSize:10,color:'#8A4A55',fontWeight:600,marginTop:2}}>🧾 Gastos</div>
+          <div style={{fontSize:9,color:'#C49090',marginTop:1}}>total registrado</div>
+        </div>
+      </div>
+
+      {/* Neto */}
+      {(user.ingresos > 0 || user.montoGastos > 0) && (
+        <div style={{
+          borderRadius:10, padding:'9px 14px',
+          background: netoPos ? '#EDF7F0' : '#FFF0F0',
+          border: `1px solid ${netoPos ? '#B8DEC8' : '#FFCCCC'}`,
+          display:'flex', justifyContent:'space-between', alignItems:'center',
+        }}>
+          <span style={{fontSize:11,fontWeight:700,color:netoPos?'#4A8C6E':'#B03030'}}>
+            {netoPos ? '📈 Neto del mes' : '📉 Neto del mes'}
+          </span>
+          <span style={{fontSize:14,fontWeight:800,color:netoPos?'#2E7D52':'#B03030'}}>
+            {netoPos?'+':'-'}${fmt(Math.abs(neto))}
+          </span>
         </div>
       )}
     </div>
@@ -115,21 +147,38 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
   // Recalcular montoGastos desde el array de gastos actual (no del log de auditoría)
   // para que refleje ediciones de montos en tiempo real
   const safeExpenses = Array.isArray(expenses) ? expenses : []
+  const safeAppts    = Array.isArray(appts)    ? appts    : []
   const usersRaw = report?.users || []
   const users = usersRaw.map(u => {
+    const email = String(u.email||'').trim().toLowerCase()
+
+    // Gastos: monto real actual filtrado por createdBy + mes
     const monto = safeExpenses
       .filter(e => {
         const d = typeof e.date === 'string' ? e.date : ''
-        return String(e.createdBy||'').trim().toLowerCase() === String(u.email||'').trim().toLowerCase()
+        return String(e.createdBy||'').trim().toLowerCase() === email
             && d.slice(0,7) === month
       })
       .reduce((s,e) => s + Number(String(e.amount||'0').replace(/[^0-9.-]/g,'')), 0)
-    return { ...u, montoGastos: monto }
+
+    // Ingresos: suma de citas completadas atendidas por esta empleada en el mes
+    const ingresos = safeAppts
+      .filter(a => {
+        const d = typeof a.date === 'string' ? a.date : ''
+        const completada = a.completed === true || a.completed === 'true'
+        return String(a.assignedTo||'').trim().toLowerCase() === email
+            && d.slice(0,7) === month
+            && completada
+      })
+      .reduce((s,a) => s + Number(String(a.totalPrice||a.servicePrice||'0').replace(/[^0-9.-]/g,'')), 0)
+
+    return { ...u, montoGastos: monto, ingresos }
   })
 
-  const totCitas  = users.reduce((s,u)=>s+u.citas,0)
-  const totGastos = users.reduce((s,u)=>s+u.gastos,0)
-  const totMonto  = users.reduce((s,u)=>s+u.montoGastos,0)
+  const totCitas    = users.reduce((s,u)=>s+u.citas,0)
+  const totGastos   = users.reduce((s,u)=>s+u.gastos,0)
+  const totMonto    = users.reduce((s,u)=>s+u.montoGastos,0)
+  const totIngresos = users.reduce((s,u)=>s+u.ingresos,0)
 
   return (
     <div style={{padding:'0 0 80px'}}>
@@ -172,10 +221,11 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
           {!loading && !error && (
             <>
               {/* Resumen total */}
-              <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap'}}>
-                <StatCard label="Citas creadas"      value={totCitas}           color={P}/>
-                <StatCard label="Gastos registrados" value={totGastos}          color='#D97706'/>
-                <StatCard label="Monto en gastos"    value={`$${fmt(totMonto)}`} color='#059669' sub={monthLabel(month)}/>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
+                <StatCard label="Citas creadas"      value={totCitas}              color={P}/>
+                <StatCard label="Gastos registrados" value={totGastos}             color='#D97706'/>
+                <StatCard label="Total en gastos"    value={`$${fmt(totMonto)}`}   color='#B03030' sub={monthLabel(month)}/>
+                <StatCard label="Total en ingresos"  value={`$${fmt(totIngresos)}`} color='#059669' sub="citas completadas"/>
               </div>
 
               {users.length === 0 ? (
