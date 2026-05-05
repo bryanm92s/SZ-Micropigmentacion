@@ -131,9 +131,9 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
 ══════════════════════════════════════════════════════════════ */
 const PALETTES = [
   { id:'fucsia',  name:'Fucsia',       emoji:'🩷',
-    primary:'#C2185B', pd:'#880E4F', pl:'#FCE4EC',
-    bg:'#FDF0F5',   card:'#FFFFFF', border:'#F8BBD0',
-    t:'#2A0A18',    t2:'#7A3050' },
+    primary:'#C04A82', pd:'#9A2D64', pl:'#FCE8F2',
+    bg:'#FDF2F7',   card:'#FFFFFF', border:'#F0C0D8',
+    t:'#2A0A1A',    t2:'#7A2A52' },
   { id:'rosa',    name:'Rosa Blush',   emoji:'🌸',
     primary:'#B5524A', pd:'#8E3E38', pl:'#FAEAE8',
     bg:'#F7F0EC',   card:'#FFFFFF', border:'#E8D0CC',
@@ -1245,7 +1245,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
   const dom    = bool(appt.domicilio)
   const status = appt.completed==='noshow' ? 'noshow' : bool(appt.completed) ? 'done' : 'pending'
   const past   = isPastAppt(appt)
-  const bgMap  = {done:'var(--done-bg,#F0FFF8)', noshow:'var(--noshow-bg,#FFF4F0)', pending: past?'var(--card)':'var(--card)'}
+  const bgMap  = {done:'var(--card)', noshow:'var(--card)', pending:'var(--card)'}
   const brdMap = {done:'var(--green)', noshow:'var(--red)', pending: 'var(--border)'}
   const resolvedCreatedBy = appt.createdBy
     ? (userNameMap[String(appt.createdBy).trim().toLowerCase()] || String(appt.createdBy).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
@@ -1254,7 +1254,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
     ? (userNameMap[String(appt.assignedTo).trim().toLowerCase()] || String(appt.assignedTo).split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()))
     : null
   return (
-    <div style={{background:bgMap[status],borderRadius:12,border:`1.5px solid ${brdMap[status]}`,padding:14,marginTop:8}}>
+    <div style={{background:bgMap[status],borderRadius:12,border:`1.5px solid ${brdMap[status]}`,borderLeft:`4px solid ${brdMap[status]}`,padding:14,marginTop:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
         <div>
           <div style={{fontWeight:700,fontSize:14,marginBottom:1,color:'var(--t)'}}>{appt.clientName}</div>

@@ -315,8 +315,8 @@ function AccessManager({ userEmail, sync }) {
           <div style={{display:'flex',gap:10}}>
             {['Administradora','Empleada'].map(r=>(
               <button key={r} onClick={()=>setNewRole(r)}
-                style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${newRole===r?P:PB}`,
-                  background:newRole===r?PL:'var(--card)',color:newRole===r?P:'var(--t2)',
+                style={{flex:1,padding:'10px',borderRadius:10,border:`2px solid ${newRole===r?P:'var(--border)'}`,
+                  background:newRole===r?'var(--primary-l)':'var(--card)',color:newRole===r?P:'var(--t)',
                   fontFamily:'inherit',fontSize:13,fontWeight:700,cursor:'pointer',transition:'all .15s'}}>
                 {r==='Administradora'?'👑 Administradora':'👤 Empleada'}
               </button>
