@@ -130,6 +130,10 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
    THEME — PALETTES + DARK MODE
 ══════════════════════════════════════════════════════════════ */
 const PALETTES = [
+  { id:'fucsia',  name:'Fucsia',       emoji:'🩷',
+    primary:'#C2185B', pd:'#880E4F', pl:'#FCE4EC',
+    bg:'#FDF0F5',   card:'#FFFFFF', border:'#F8BBD0',
+    t:'#2A0A18',    t2:'#7A3050' },
   { id:'rosa',    name:'Rosa Blush',   emoji:'🌸',
     primary:'#B5524A', pd:'#8E3E38', pl:'#FAEAE8',
     bg:'#F7F0EC',   card:'#FFFFFF', border:'#E8D0CC',
@@ -2561,7 +2565,7 @@ function ExpenseDetail({expenses,SE,setTab,tabExtra,confirm,userNameMap={}}) {
     <select className="inp" value={month} onChange={e=>setM(e.target.value)} style={{marginBottom:14}}>
       {months.map(m=><option key={m} value={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('es-CO',{month:'long',year:'numeric'})}</option>)}
     </select>
-    <div style={{background:'linear-gradient(135deg,var(--red),#a04040)',borderRadius:14,padding:'16px 18px',marginBottom:14,color:'white',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+    <div style={{background:'linear-gradient(135deg,var(--primary),var(--primary-d))',borderRadius:14,padding:'16px 18px',marginBottom:14,color:'white',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
       <div><div style={{fontSize:11,opacity:.8,textTransform:'uppercase',letterSpacing:'.07em',fontWeight:600}}>Total del mes</div><div style={{fontFamily:'Georgia,serif',fontSize:26,fontWeight:700,marginTop:3}}>{fmtM(tot)}</div></div>
       <div style={{fontSize:32}}>📊</div>
     </div>
