@@ -338,11 +338,23 @@ function AccessManager({ userEmail, sync }) {
           {busy?'Guardando…':'Actualizar rol'}
         </button>
 
-        <div style={{marginTop:20,padding:'14px',background:'var(--primary-l)',borderRadius:12,border:'1px solid var(--border)'}}>
-          <div style={{fontSize:12,fontWeight:700,color:'var(--primary)',marginBottom:6}}>📋 Diferencia de roles</div>
-          <div style={{fontSize:12,color:'var(--t)',lineHeight:1.8}}>
-            <span style={{display:'block',marginBottom:4}}>👑 <strong style={{color:'var(--primary)'}}>Administradora:</strong> acceso total — citas, clientes, servicios, finanzas, reportes</span>
-            <span style={{display:'block'}}>👤 <strong style={{color:'var(--t)'}}>Empleada:</strong> citas, clientes, servicios y solo sus propios gastos</span>
+        <div style={{marginTop:20,padding:'14px 16px',background:'var(--card)',borderRadius:12,border:'1.5px solid var(--border)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--primary)',marginBottom:10}}>📋 Diferencia de roles</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',gap:8,alignItems:'flex-start',padding:'8px 10px',background:'var(--primary-l)',borderRadius:8}}>
+              <span style={{fontSize:16,flexShrink:0}}>👑</span>
+              <div style={{fontSize:12,color:'var(--t)',lineHeight:1.5}}>
+                <strong style={{color:'var(--primary)'}}>Administradora:</strong>{' '}
+                acceso total — citas, clientes, servicios, finanzas y reportes
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'flex-start',padding:'8px 10px',background:'var(--bg)',borderRadius:8,border:'1px solid var(--border)'}}>
+              <span style={{fontSize:16,flexShrink:0}}>👤</span>
+              <div style={{fontSize:12,color:'var(--t)',lineHeight:1.5}}>
+                <strong style={{color:'var(--t)'}}>Empleada:</strong>{' '}
+                citas, clientes, y solo sus propios gastos
+              </div>
+            </div>
           </div>
         </div>
       </div>
