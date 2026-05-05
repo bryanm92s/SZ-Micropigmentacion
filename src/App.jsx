@@ -127,6 +127,13 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   BUSINESS CONFIG — from Vercel environment variables
+══════════════════════════════════════════════════════════════ */
+const BIZ_NAME     = import.meta.env.VITE_BIZ_NAME     || 'SZ Micropigmentación'
+const BIZ_SUBTITLE = import.meta.env.VITE_BIZ_SUBTITLE || 'Micropigmentación'
+const BIZ_EMOJI    = import.meta.env.VITE_BIZ_EMOJI    || '🌸'
+
+/* ══════════════════════════════════════════════════════════════
    THEME — PALETTES + DARK MODE
 ══════════════════════════════════════════════════════════════ */
 const PALETTES = [
@@ -297,7 +304,7 @@ export default function App() {
 
   const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark}
 
-  if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>🌸</div></Cent>
+  if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>{BIZ_EMOJI}</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
 
   return (
@@ -311,10 +318,10 @@ export default function App() {
 
       <header style={{background:'var(--primary)',padding:'13px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:100,boxShadow:'0 2px 12px rgba(180,100,100,0.18)'}}>
         <div style={{display:'flex',alignItems:'center',gap:11}}>
-          <div style={{fontSize:26}}>🌸</div>
+          <div style={{fontSize:26}}>{BIZ_EMOJI}</div>
           <div>
-            <div style={{fontFamily:'Georgia,serif',fontSize:15,color:'white',fontWeight:700}}>SZ Micropigmentación</div>
-            <div style={{fontSize:9,color:'rgba(255,255,255,0.78)',letterSpacing:'0.14em',textTransform:'uppercase'}}>Micropigmentación</div>
+            <div style={{fontFamily:'Georgia,serif',fontSize:15,color:'white',fontWeight:700}}>{BIZ_NAME}</div>
+            <div style={{fontSize:9,color:'rgba(255,255,255,0.78)',letterSpacing:'0.14em',textTransform:'uppercase'}}>{BIZ_SUBTITLE}</div>
           </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -373,7 +380,7 @@ export default function App() {
 
       <footer style={{textAlign:'center',padding:'20px 14px 28px',borderTop:'1px solid var(--border)',marginTop:8,background:'var(--card)'}}>
         <span style={{fontSize:11,color:'var(--t2)',letterSpacing:'.03em',display:'inline-flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'center'}}>
-          <span>SZ Micropigmentación</span>
+          <span>{BIZ_EMOJI} {BIZ_NAME}</span>
           <span style={{color:'var(--border)'}}>|</span>
           <span>© {new Date().getFullYear()} Bryan Morales</span>
           <span style={{color:'var(--border)'}}>|</span>
@@ -1805,7 +1812,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
     </div>}
 
     {loading && <div className="card" style={{textAlign:'center',padding:40}}>
-      <div style={{fontSize:38,display:'inline-block',animation:'spin 1s linear infinite'}}>🌸</div>
+      <div style={{fontSize:38,display:'inline-block',animation:'spin 1s linear infinite'}}>{BIZ_EMOJI}</div>
       <div style={{fontFamily:'Georgia,serif',fontSize:16,color:'var(--primary)',marginTop:14}}>Guardando y creando evento en Calendar…</div>
     </div>}
 
