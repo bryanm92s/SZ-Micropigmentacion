@@ -132,6 +132,7 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
 const BIZ_NAME     = import.meta.env.VITE_BIZ_NAME     || 'SZ Micropigmentación'
 const BIZ_SUBTITLE = import.meta.env.VITE_BIZ_SUBTITLE || 'Micropigmentación'
 const BIZ_EMOJI    = import.meta.env.VITE_BIZ_EMOJI    || '🌸'
+const BIZ_LOGO     = import.meta.env.VITE_BIZ_LOGO     || ''
 
 /* ══════════════════════════════════════════════════════════════
    THEME — PALETTES + DARK MODE
@@ -318,7 +319,10 @@ export default function App() {
 
       <header style={{background:'var(--primary)',padding:'13px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',position:'sticky',top:0,zIndex:100,boxShadow:'0 2px 12px rgba(180,100,100,0.18)'}}>
         <div style={{display:'flex',alignItems:'center',gap:11}}>
-          <div style={{fontSize:26}}>{BIZ_EMOJI}</div>
+          {BIZ_LOGO
+            ? <img src={BIZ_LOGO} alt={BIZ_NAME} style={{width:38,height:38,borderRadius:10,objectFit:'cover',flexShrink:0}}/>
+            : <div style={{fontSize:26}}>{BIZ_EMOJI}</div>
+          }
           <div>
             <div style={{fontFamily:'Georgia,serif',fontSize:15,color:'white',fontWeight:700}}>{BIZ_NAME}</div>
             <div style={{fontSize:9,color:'rgba(255,255,255,0.78)',letterSpacing:'0.14em',textTransform:'uppercase'}}>{BIZ_SUBTITLE}</div>
