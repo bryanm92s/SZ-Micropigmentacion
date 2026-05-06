@@ -101,15 +101,15 @@ const DEFAULT_SERVICES = [
 ]
 
 // WhatsApp with proper emoji encoding
-const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
+const openWA = (phone, name, time, date, serviceNames, total, isDom, attendantName) => {
   const p     = ('57' + phone.replace(/\D/g, '')).replace(/^5757/, '57')
-  // ASCII-safe JS unicode escapes — works regardless of file encoding
   const NAIL  = '\uD83D\uDC85'  // 💅
   const BLOOM = '\uD83C\uDF38'  // 🌸
   const MOTO  = '\uD83D\uDEF5'  // 🛵
   const SPARK = '\u2728'         // ✨
   const CAL   = '\uD83D\uDCC5'  // 📅
   const CARD  = '\uD83D\uDCB3'  // 💳
+  const PERS  = '\uD83D\uDC69\u200D\uD83D\uDCBC' // 👩‍💼
   const end   = isDom ? 'Nos vemos pronto ' + NAIL : '\u00A1Te esperamos! ' + BLOOM
   const dom   = isDom ? '\n' + MOTO + ' *A domicilio*' : ''
   const lines = [
@@ -117,11 +117,11 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom) => {
     SPARK + ' *' + serviceNames + '*' + dom,
     CAL + ' *' + fmtDate(date) + '* a las *' + fmtTime(time) + '*',
     CARD + ' Total: *' + fmtM(total) + '*',
+    attendantName ? (PERS + ' Ser\u00E1 atendido/a por: *' + attendantName + '*') : '',
     '',
     end,
-  ]
+  ].filter(l => l !== null)
   const msg = lines.join('\n')
-  // Use api.whatsapp.com/send which handles encoded text more reliably than wa.me
   const url = 'https://api.whatsapp.com/send/?phone=' + p + '&text=' + encodeURIComponent(msg) + '&type=phone_number&app_absent=0'
   window.open(url, '_blank')
 }
@@ -259,7 +259,7 @@ export default function App() {
   }, [])
 
   useEffect(() => { refresh() }, [])
-  useEffect(() => { const i=setInterval(()=>refresh(true),2*60*1000); return()=>clearInterval(i) }, [refresh])
+  useEffect(() => { const i=setInterval(()=>refresh(true),30*1000); return()=>clearInterval(i) }, [refresh])
 
   const sync = useCallback(async (payload, setter, value) => {
     if (setter) setter(value)
@@ -289,6 +289,8 @@ export default function App() {
     SA(next)
     if (appt.calendarEventId && bool(appt.calendarCreated))
       saveData({action:'deleteCalendarEvent',eventId:appt.calendarEventId}).catch(()=>{})
+    if (appt.adminEventId)
+      saveData({action:'deleteCalendarEvent',eventId:appt.adminEventId}).catch(()=>{})
   }, [appts, SA])
 
   const isAdmin = userRole === 'Administradora'
@@ -857,6 +859,8 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
             <div>Borrando datos…</div>
           </div>
         )}
+
+        {resetStep === 1 && (
           <div>
             <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
               Escribe <strong>CONFIRMAR</strong> para continuar:
@@ -1319,7 +1323,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
           style={{background:status==='noshow'?'var(--red)':'var(--primary-l)',color:status==='noshow'?'white':'var(--red)',border:`1.5px solid ${status==='noshow'?'var(--red)':'var(--border)'}`,borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s',opacity: status==='done'?.5:1}}>
           ✗ No asistió
         </button>
-        {status==='pending' && <button className="btn-wa" onClick={()=>openWA(appt.clientPhone,appt.clientName,appt.time,appt.date,appt.serviceNames,appt.totalPrice||appt.servicePrice,dom)}>💬 Recordatorio</button>}
+        {status==='pending' && <button className="btn-wa" onClick={()=>openWA(appt.clientPhone,appt.clientName,appt.time,appt.date,appt.serviceNames,appt.totalPrice||appt.servicePrice,dom,resolvedAtendida)}>💬 Recordatorio</button>}
         {canEdit && status==='pending' && <button className="btn-edit" onClick={onEdit}>✏️ Editar</button>}
         {status==='pending' && <button className="btn-del" onClick={onDelete}>🗑️ Eliminar</button>}
       </div>
@@ -1401,7 +1405,12 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
     await sync({appointments:next},null,null)
     SA(next)
     if (appt.calendarEventId && bool(appt.calendarCreated)) {
-      const r = await saveData({action:'updateCalendarEvent',eventId:appt.calendarEventId,calendarEvent:{date,time}}).catch(e=>({calResult:{ok:false,error:e.message}}))
+      const r = await saveData({
+        action:'updateCalendarEvent',
+        eventId:appt.calendarEventId,
+        adminEventId: appt.adminEventId||'',
+        calendarEvent:{date,time,serviceNames:svcIds.map(id=>safeSvcs.find(s=>s.id===id)?.name||'').join(', '),clientName:appt.clientName,clientPhone:appt.clientPhone,totalPrice:grand,domicilio:dom,domicilioPrice:dom?toN(domP):0,assignedTo}
+      }).catch(e=>({calResult:{ok:false,error:e.message}}))
       setR(r?.calResult||null)
     } else setR({ok:null})
     setL(false)
@@ -1627,9 +1636,13 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
     }
     const res = await sync({
       appointments:[...appts,appt],
-      calendarEvent:{clientName:fc.name,clientPhone:fc.phone,serviceNames:svcNames,totalPrice:grand,domicilio:dom,domicilioPrice:dom?toN(domP):0,address:addr,date,time}
+      calendarEvent:{clientName:fc.name,clientPhone:fc.phone,serviceNames:svcNames,totalPrice:grand,domicilio:dom,domicilioPrice:dom?toN(domP):0,address:addr,date,time,assignedTo:assignedTo||userEmail||''}
     },null,null)
-    if (res?.calResult?.ok) { appt.calendarCreated=true; appt.calendarEventId=res.calResult.eventId||'' }
+    if (res?.calResult?.ok) {
+      appt.calendarCreated  = true
+      appt.calendarEventId  = res.calResult.eventId||''
+      appt.adminEventId     = res.calResult.adminEventId||''
+    }
     SA([...appts,appt]); setCalR(res?.calResult||null); setL(false); setDone(true)
   }
 
