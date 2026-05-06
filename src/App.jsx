@@ -259,7 +259,7 @@ export default function App() {
   }, [])
 
   useEffect(() => { refresh() }, [])
-  useEffect(() => { const i=setInterval(()=>refresh(true),30*1000); return()=>clearInterval(i) }, [refresh])
+  useEffect(() => { const i=setInterval(()=>refresh(true),2*60*1000); return()=>clearInterval(i) }, [refresh])
 
   const sync = useCallback(async (payload, setter, value) => {
     if (setter) setter(value)
@@ -658,7 +658,8 @@ function SyncBadge({status,lastSync}) {
   const [ago,setAgo] = useState('')
   useEffect(()=>{
     if (!lastSync) return
-    const m=Math.floor((Date.now()-lastSync)/60000);setAgo(m===0?'ahora':m+'min')
+    const t=()=>{const m=Math.floor((Date.now()-lastSync)/60000);setAgo(m===0?'ahora':m+'min')}
+    t(); const i=setInterval(t,30000); return()=>clearInterval(i)
   },[lastSync])
   const c={ok:{bg:'rgba(255,255,255,0.18)',col:'white',l:ago?`✓ ${ago}`:'✓'},saving:{bg:'rgba(255,255,255,0.18)',col:'white',l:'⏳'},error:{bg:'rgba(220,80,80,0.4)',col:'white',l:'⚠️'}}[status]||{bg:'transparent',col:'transparent',l:''}
   return <div style={{background:c.bg,color:c.col,borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,whiteSpace:'nowrap'}}>{c.l}</div>
@@ -856,6 +857,8 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
             <div>Borrando datos…</div>
           </div>
         )}
+
+        {resetStep === 1 && (
           <div>
             <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
               Escribe <strong>CONFIRMAR</strong> para continuar:
