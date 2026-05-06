@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { loadData, saveData } from './api.js'
+import { loadData, saveData, fullReset } from './api.js'
 import AuthShell, { ChangePasswordModal } from './Auth.jsx'
 import ReportsTab from './ReportsTab.jsx'
 
@@ -728,9 +728,17 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
   const currentPalette = getPalette(paletteId)
 
   const doReset = async () => {
-    await sync({ clients:[], appointments:[], expenses:[] }, null, null)
-    SC([]); SA([]); SE([])
-    setResetStep(2)
+    setResetStep('loading')
+    try {
+      await fullReset(userEmail)
+      // Limpiar estado local
+      SC([]); SA([]); SE([])
+      // Limpiar caché localStorage
+      ;['sb_c','sb_a','sb_e'].forEach(k => { try { localStorage.removeItem(k) } catch {} })
+      setResetStep(2)
+    } catch(e) {
+      setResetStep(1) // volver al paso de confirmación si falla
+    }
     setResetInput('')
   }
 
@@ -843,7 +851,12 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
           </button>
         )}
 
-        {resetStep === 1 && (
+        {resetStep === 'loading' && (
+          <div style={{textAlign:'center',padding:'20px',color:'var(--t2)',fontSize:13}}>
+            <div style={{fontSize:28,marginBottom:8,animation:'spin 1s linear infinite',display:'inline-block'}}>{BIZ_EMOJI}</div>
+            <div>Borrando datos…</div>
+          </div>
+        )}
           <div>
             <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
               Escribe <strong>CONFIRMAR</strong> para continuar:

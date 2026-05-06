@@ -56,3 +56,7 @@ export async function getAuditReport(month, userEmail) {
 export async function updateUserRole(targetEmail, newRole, userEmail) {
   return saveData({ action: 'update_user_role', targetEmail, newRole }, userEmail)
 }
+
+export async function fullReset(userEmail) {
+  return saveData({ action: 'full_reset' }, userEmail)
+}
