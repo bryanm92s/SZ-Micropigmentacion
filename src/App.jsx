@@ -1246,7 +1246,7 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
     <AccGroup label="Pasadas"     color="#888888" gKey="past"     items={groups.past}     canEdit={false}/>
     {appts.length===0 && (
       <div className="card" style={{textAlign:'center',padding:30,color:'var(--t2)'}}>
-        No hay citas 🌸<br/><br/>
+        No hay citas {BIZ_EMOJI}<br/><br/>
         <button className="btn" onClick={()=>setNew(true)}>+ Nueva cita</button>
       </div>
     )}
