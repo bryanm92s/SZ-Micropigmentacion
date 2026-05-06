@@ -857,8 +857,6 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
             <div>Borrando datos…</div>
           </div>
         )}
-
-        {resetStep === 1 && (
           <div>
             <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
               Escribe <strong>CONFIRMAR</strong> para continuar:
