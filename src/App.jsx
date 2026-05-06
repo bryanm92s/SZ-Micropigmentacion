@@ -259,7 +259,7 @@ export default function App() {
   }, [])
 
   useEffect(() => { refresh() }, [])
-  useEffect(() => { const i=setInterval(()=>refresh(true),2*60*1000); return()=>clearInterval(i) }, [refresh])
+  useEffect(() => { const i=setInterval(()=>refresh(true),30*1000); return()=>clearInterval(i) }, [refresh])
 
   const sync = useCallback(async (payload, setter, value) => {
     if (setter) setter(value)
@@ -658,8 +658,7 @@ function SyncBadge({status,lastSync}) {
   const [ago,setAgo] = useState('')
   useEffect(()=>{
     if (!lastSync) return
-    const t=()=>{const m=Math.floor((Date.now()-lastSync)/60000);setAgo(m===0?'ahora':m+'min')}
-    t(); const i=setInterval(t,30000); return()=>clearInterval(i)
+    const m=Math.floor((Date.now()-lastSync)/60000);setAgo(m===0?'ahora':m+'min')
   },[lastSync])
   const c={ok:{bg:'rgba(255,255,255,0.18)',col:'white',l:ago?`✓ ${ago}`:'✓'},saving:{bg:'rgba(255,255,255,0.18)',col:'white',l:'⏳'},error:{bg:'rgba(220,80,80,0.4)',col:'white',l:'⚠️'}}[status]||{bg:'transparent',col:'transparent',l:''}
   return <div style={{background:c.bg,color:c.col,borderRadius:20,padding:'4px 10px',fontSize:11,fontWeight:600,whiteSpace:'nowrap'}}>{c.l}</div>
