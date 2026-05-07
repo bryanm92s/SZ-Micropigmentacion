@@ -128,7 +128,6 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
   const months   = getMonthOptions()
   const nowMonth = months[0]
   const [month,     setMonth]     = useState(nowMonth)
-  const [loading,   setLoading]   = useState(false)
   const [roleTab,   setRoleTab]   = useState(false)
 
   const safeExpenses = Array.isArray(expenses) ? expenses : []
@@ -204,15 +203,7 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
             </select>
           </div>
 
-          {loading && (
-            <div style={{textAlign:'center',padding:'40px',color:'var(--t2)',fontSize:14}}>Cargando reporte…</div>
-          )}
-          {error && (
-            <div style={{background:'var(--primary-l)',color:'var(--red)',borderRadius:12,padding:'12px 16px',marginBottom:16,fontSize:13}}>{error}</div>
-          )}
-
-          {!loading && !error && (
-            <>
+          <>
               {/* Resumen total */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
                 <StatCard label="Citas creadas"      value={totCitas}              color={P}/>
