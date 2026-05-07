@@ -6,9 +6,11 @@
 
 const SECRET_TOKEN = 'CAMBIA_ESTE_TOKEN';
 
-// Email de la Administradora — debe coincidir con el correo del propietario del script.
-// Los eventos se crean en el calendario del assignedTo Y en el calendario de la admin.
-const ADMIN_EMAIL = Session.getActiveUser().getEmail();
+// Email de la Administradora — se detecta automáticamente como el dueño del script.
+// Se usa como función para evitar errores al inicializar con ANYONE_ANONYMOUS.
+function getAdminEmail() {
+  try { return Session.getEffectiveUser().getEmail() || '' } catch(e) { return '' }
+}
 
 const SHEETS = {
   clients:     'Clientes',
@@ -35,7 +37,7 @@ const HEADERS_ES = {
   appointments: ['ID','ID Cliente','Nombre Cliente','Celular',
                  'IDs Servicios','Nombres Servicios','Precio Servicios',
                  'Domicilio','Precio Domicilio','Total','Dirección',
-                 'Fecha','Hora','Fecha Creación','Evento Creado','ID Evento Calendar','Completada','Atendida Por','Creada Por'],
+                 'Fecha','Hora','Fecha Creación','Evento Creado','ID Evento Calendar','ID Evento Admin','Completada','Atendida Por','Creada Por'],
   expenses:     ['ID','Descripción','Monto','Categoría','Fecha','Creado Por'],
 };
 
@@ -113,15 +115,17 @@ function doPost(e) {
 
     let calResult=null;
     if (b.calendarEvent) {
-      // Enriquecer con nombre del assignedTo si está disponible en usuarios
-      if (b.calendarEvent.assignedTo && !b.calendarEvent.assignedToName) {
-        const assignedUser = findUser(ss, b.calendarEvent.assignedTo);
-        if (assignedUser && assignedUser.name) b.calendarEvent.assignedToName = assignedUser.name;
+      try {
+        if (b.calendarEvent.assignedTo && !b.calendarEvent.assignedToName) {
+          const assignedUser = findUser(ss, b.calendarEvent.assignedTo);
+          if (assignedUser && assignedUser.name) b.calendarEvent.assignedToName = assignedUser.name;
+        }
+        calResult = createCalEvent(b.calendarEvent);
+      } catch(calEx) {
+        calResult = { ok: false, error: 'Calendar: ' + calEx.message };
       }
-      calResult = createCalEvent(b.calendarEvent);
     }
-    // Eliminar evento anterior del admin si se reasignó la cita
-    if (b.deleteAdminEventId) deleteCalEvent(b.deleteAdminEventId);
+    if (b.deleteAdminEventId) { try { deleteCalEvent(b.deleteAdminEventId); } catch(e) {} }
     return ok({saved:true,calResult});
   } catch(ex) { return err('POST: '+ex.message); }
 }
@@ -436,7 +440,7 @@ function findUser(ss, email) {
 // Si es el usuario activo o no se puede acceder, usa el calendario por defecto.
 function getCalendarForUser(email) {
   try {
-    if (!email || email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+    if (!email || email.trim().toLowerCase() === getAdminEmail().trim().toLowerCase()) {
       return CalendarApp.getDefaultCalendar();
     }
     // Busca si el usuario compartió su calendario con la cuenta del script
@@ -468,7 +472,7 @@ function createCalEvent(evt) {
     const title = '✨ ' + evt.serviceNames + ' — ' + evt.clientName;
     const desc  = buildEventDesc(evt);
     const assignedEmail = (evt.assignedTo || '').trim().toLowerCase();
-    const adminEmail    = ADMIN_EMAIL.trim().toLowerCase();
+    const adminEmail    = getAdminEmail().trim().toLowerCase();
     const result = { ok: true };
 
     // Crear en calendario del assignedTo

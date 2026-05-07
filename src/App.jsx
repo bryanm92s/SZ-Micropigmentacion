@@ -116,8 +116,9 @@ const openWA = (phone, name, time, date, serviceNames, total, isDom, attendantNa
     'Hola ' + name + '! ' + SPARK + ' Te recordamos tu cita:',
     SPARK + ' *' + serviceNames + '*' + dom,
     CAL + ' *' + fmtDate(date) + '* a las *' + fmtTime(time) + '*',
+    isDom ? (MOTO + ' *A domicilio*') : null,
     CARD + ' Total: *' + fmtM(total) + '*',
-    attendantName ? (PERS + ' Ser\u00E1 atendido/a por: *' + attendantName + '*') : '',
+    attendantName ? (PERS + ' Ser\u00E1 atendido/a por: *' + attendantName + '*') : null,
     '',
     end,
   ].filter(l => l !== null)
@@ -726,20 +727,21 @@ function GS() { return <style>{`
 function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm, isAdmin }) {
   const [resetInput, setResetInput] = useState('')
   const [resetDone,  setResetDone]  = useState(false)
-  const [resetStep,  setResetStep]  = useState(0) // 0=idle 1=confirm 2=done
+  const [resetStep,  setResetStep]  = useState(0)
+  const [resetError, setResetError] = useState('')
   const currentPalette = getPalette(paletteId)
 
   const doReset = async () => {
     setResetStep('loading')
+    setResetError('')
     try {
       await fullReset(userEmail)
-      // Limpiar estado local
       SC([]); SA([]); SE([])
-      // Limpiar caché localStorage
       ;['sb_c','sb_a','sb_e'].forEach(k => { try { localStorage.removeItem(k) } catch {} })
       setResetStep(2)
     } catch(e) {
-      setResetStep(1) // volver al paso de confirmación si falla
+      setResetError('Error: ' + (e.message || 'No se pudo conectar con el servidor'))
+      setResetStep(1)
     }
     setResetInput('')
   }
@@ -865,6 +867,11 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
             <div style={{fontSize:13,color:'#C03030',fontWeight:600,marginBottom:8}}>
               Escribe <strong>CONFIRMAR</strong> para continuar:
             </div>
+            {resetError && (
+              <div style={{background:'#FEE2E2',color:'#B91C1C',borderRadius:8,padding:'8px 12px',fontSize:12,marginBottom:8}}>
+                {resetError}
+              </div>
+            )}
             <input className="inp" value={resetInput}
               onChange={e=>setResetInput(e.target.value)}
               placeholder="CONFIRMAR"
