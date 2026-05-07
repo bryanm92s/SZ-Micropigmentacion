@@ -70,20 +70,32 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
       </div>
 
       {/* Citas y Gastos — clickeables */}
+      {/* Citas creadas / atendidas */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
         <div onClick={onGoCitas}
           style={{background:PL,borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoCitas?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoCitas)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
-          <div style={{fontSize:24,fontWeight:800,color:P}}>{user.citas}</div>
-          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Citas creadas {onGoCitas&&<span style={{color:P}}>→</span>}</div>
+          <div style={{fontSize:24,fontWeight:800,color:P}}>{user.citasCreadas}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>✏️ Creadas {onGoCitas&&<span style={{color:P}}>→</span>}</div>
         </div>
+        <div style={{background:'#EDF7F0',borderRadius:10,padding:'10px',textAlign:'center'}}>
+          <div style={{fontSize:24,fontWeight:800,color:'var(--green)'}}>{user.citasAtendidas}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>👩‍💼 Atendidas</div>
+        </div>
+      </div>
+      {/* Gastos */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
         <div onClick={onGoGastos}
           style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:24,fontWeight:800,color:'var(--gold)'}}>{user.gastos}</div>
-          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos registrados {onGoGastos&&<span style={{color:'var(--gold)'}}>→</span>}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos reg. {onGoGastos&&<span style={{color:'var(--gold)'}}>→</span>}</div>
+        </div>
+        <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
+          <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600,marginTop:2}}>🧾 Total gastos</div>
         </div>
       </div>
 
@@ -139,16 +151,22 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
   const users = safeUsers.map(u => {
     const email = String(u.email||'').trim().toLowerCase()
 
-    // Citas: donde esta persona ES la que atiende (assignedTo)
-    const citasDelMes = safeAppts.filter(a => {
+    // Citas creadas: donde esta persona la guardó en el sistema
+    const citasCreadas = safeAppts.filter(a => {
+      const d = typeof a.date === 'string' ? a.date : ''
+      return String(a.createdBy||'').trim().toLowerCase() === email
+          && d.slice(0,7) === month
+    }).length
+
+    // Citas atendidas: donde esta persona ES la que atiende (assignedTo)
+    const citasAtendidas = safeAppts.filter(a => {
       const d = typeof a.date === 'string' ? a.date : ''
       return String(a.assignedTo||'').trim().toLowerCase() === email
           && d.slice(0,7) === month
     })
-    const citas = citasDelMes.length
 
     // Ingresos: citas completadas que atendió esta persona
-    const ingresos = citasDelMes
+    const ingresos = citasAtendidas
       .filter(a => a.completed === true || a.completed === 'true')
       .reduce((s,a) => s + Number(String(a.totalPrice||a.servicePrice||'0').replace(/[^0-9.-]/g,'')), 0)
 
@@ -162,15 +180,14 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
     const montoGastos = gastosDelMes
       .reduce((s,e) => s + Number(String(e.amount||'0').replace(/[^0-9.-]/g,'')), 0)
 
-    return { email: u.email, name: u.name||'', citas, ingresos, gastos, montoGastos }
-  }).filter(u => u.citas > 0 || u.gastos > 0 || u.ingresos > 0 || u.montoGastos > 0
-              || safeAppts.some(a=>String(a.assignedTo||'').trim().toLowerCase()===u.email.toLowerCase())
-              || safeExpenses.some(e=>String(e.createdBy||'').trim().toLowerCase()===u.email.toLowerCase()))
+    return { email: u.email, name: u.name||'', citasCreadas, citasAtendidas: citasAtendidas.length, ingresos, gastos, montoGastos }
+  }).filter(u => u.citasCreadas > 0 || u.citasAtendidas > 0 || u.gastos > 0 || u.ingresos > 0)
 
-  const totCitas    = users.reduce((s,u)=>s+u.citas,0)
-  const totGastos   = users.reduce((s,u)=>s+u.gastos,0)
-  const totMonto    = users.reduce((s,u)=>s+u.montoGastos,0)
-  const totIngresos = users.reduce((s,u)=>s+u.ingresos,0)
+  const totCreadas   = users.reduce((s,u)=>s+u.citasCreadas,0)
+  const totAtendidas = users.reduce((s,u)=>s+u.citasAtendidas,0)
+  const totGastos    = users.reduce((s,u)=>s+u.gastos,0)
+  const totMonto     = users.reduce((s,u)=>s+u.montoGastos,0)
+  const totIngresos  = users.reduce((s,u)=>s+u.ingresos,0)
 
   return (
     <div style={{padding:'0 0 80px'}}>
@@ -206,10 +223,10 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
           <>
               {/* Resumen total */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
-                <StatCard label="Citas creadas"      value={totCitas}              color={P}/>
-                <StatCard label="Gastos registrados" value={totGastos}             color='#D97706'/>
-                <StatCard label="Total en gastos"    value={`$${fmt(totMonto)}`}   color='#B03030' sub={monthLabel(month)}/>
-                <StatCard label="Total en ingresos"  value={`$${fmt(totIngresos)}`} color='#059669' sub="citas completadas"/>
+                <StatCard label="Citas creadas"    value={totCreadas}             color={P}/>
+                <StatCard label="Citas atendidas"  value={totAtendidas}           color='#059669'/>
+                <StatCard label="Total en gastos"  value={`$${fmt(totMonto)}`}    color='#B03030' sub={monthLabel(month)}/>
+                <StatCard label="Total ingresos"   value={`$${fmt(totIngresos)}`} color='#2E7D52' sub="citas completadas"/>
               </div>
 
               {users.length === 0 ? (
