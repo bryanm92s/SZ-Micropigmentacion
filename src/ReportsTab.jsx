@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getAuditReport, updateUserRole } from './api.js'
+import { updateUserRole } from './api.js'
 
 const P  = '#B85C6E'
 const PL = '#FDF6F0'
@@ -124,56 +124,49 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
 /* ══════════════════════════════════════════════════════════════
    REPORTS TAB
 ══════════════════════════════════════════════════════════════ */
-export default function ReportsTab({ userEmail, userRole, sync, expenses, clients, appts, SE, setTab }) {
+export default function ReportsTab({ userEmail, userRole, sync, expenses, clients, appts, SE, setTab, users: allUsers }) {
   const months   = getMonthOptions()
   const nowMonth = months[0]
   const [month,     setMonth]     = useState(nowMonth)
-  const [report,    setReport]    = useState(null)
   const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState('')
   const [roleTab,   setRoleTab]   = useState(false)
 
-  useEffect(() => { fetchReport(month) }, [month])
-
-  async function fetchReport(m) {
-    setLoading(true); setError('')
-    try {
-      const data = await getAuditReport(m, userEmail)
-      setReport(data)
-    } catch(e) { setError(e.message) }
-    finally { setLoading(false) }
-  }
-
-  // Recalcular montoGastos desde el array de gastos actual (no del log de auditoría)
-  // para que refleje ediciones de montos en tiempo real
   const safeExpenses = Array.isArray(expenses) ? expenses : []
   const safeAppts    = Array.isArray(appts)    ? appts    : []
-  const usersRaw = report?.users || []
-  const users = usersRaw.map(u => {
+  const safeUsers    = Array.isArray(allUsers) ? allUsers : []
+
+  // Calcular todo desde datos en vivo — no desde auditoría
+  // Así aparecen todos los usuarios aunque no hayan creado nada ese mes
+  const users = safeUsers.map(u => {
     const email = String(u.email||'').trim().toLowerCase()
 
-    // Gastos: monto real actual filtrado por createdBy + mes
-    const monto = safeExpenses
-      .filter(e => {
-        const d = typeof e.date === 'string' ? e.date : ''
-        return String(e.createdBy||'').trim().toLowerCase() === email
-            && d.slice(0,7) === month
-      })
-      .reduce((s,e) => s + Number(String(e.amount||'0').replace(/[^0-9.-]/g,'')), 0)
+    // Citas: donde esta persona ES la que atiende (assignedTo)
+    const citasDelMes = safeAppts.filter(a => {
+      const d = typeof a.date === 'string' ? a.date : ''
+      return String(a.assignedTo||'').trim().toLowerCase() === email
+          && d.slice(0,7) === month
+    })
+    const citas = citasDelMes.length
 
-    // Ingresos: suma de citas completadas atendidas por esta empleada en el mes
-    const ingresos = safeAppts
-      .filter(a => {
-        const d = typeof a.date === 'string' ? a.date : ''
-        const completada = a.completed === true || a.completed === 'true'
-        return String(a.assignedTo||'').trim().toLowerCase() === email
-            && d.slice(0,7) === month
-            && completada
-      })
+    // Ingresos: citas completadas que atendió esta persona
+    const ingresos = citasDelMes
+      .filter(a => a.completed === true || a.completed === 'true')
       .reduce((s,a) => s + Number(String(a.totalPrice||a.servicePrice||'0').replace(/[^0-9.-]/g,'')), 0)
 
-    return { ...u, montoGastos: monto, ingresos }
-  })
+    // Gastos: los que creó esta persona
+    const gastosDelMes = safeExpenses.filter(e => {
+      const d = typeof e.date === 'string' ? e.date : ''
+      return String(e.createdBy||'').trim().toLowerCase() === email
+          && d.slice(0,7) === month
+    })
+    const gastos      = gastosDelMes.length
+    const montoGastos = gastosDelMes
+      .reduce((s,e) => s + Number(String(e.amount||'0').replace(/[^0-9.-]/g,'')), 0)
+
+    return { email: u.email, name: u.name||'', citas, ingresos, gastos, montoGastos }
+  }).filter(u => u.citas > 0 || u.gastos > 0 || u.ingresos > 0 || u.montoGastos > 0
+              || safeAppts.some(a=>String(a.assignedTo||'').trim().toLowerCase()===u.email.toLowerCase())
+              || safeExpenses.some(e=>String(e.createdBy||'').trim().toLowerCase()===u.email.toLowerCase()))
 
   const totCitas    = users.reduce((s,u)=>s+u.citas,0)
   const totGastos   = users.reduce((s,u)=>s+u.gastos,0)
