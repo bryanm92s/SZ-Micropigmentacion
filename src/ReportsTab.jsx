@@ -236,7 +236,6 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
                 </div>
               )}
             </>
-          )}
         </div>
       ) : (
         /* ── GESTIÓN DE ACCESOS ── */
