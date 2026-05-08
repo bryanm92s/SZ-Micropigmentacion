@@ -67,24 +67,29 @@ const isPastAppt = a => {
 }
 
 // Returns available time slots: filters taken + past-today + custom exclude
+const toMinutes = t => { const [h,m] = String(t).split(':').map(Number); return h*60+m }
+const SERVICE_DURATION = 60  // all services last 60 minutes
+
 const getSlots = (date, takenApptIds, allAppts, excludeId=null, assignedTo=null) => {
   const now     = new Date()
   const isToday = date === todayStr()
-  const taken   = allAppts
+  const takenMins = allAppts
     .filter(a => {
       if (cleanDate(a.date) !== date) return false
       if (a.id === excludeId) return false
-      // Si hay empleada asignada, solo bloquear las horas de esa empleada
       if (assignedTo) {
         return String(a.assignedTo||'').trim().toLowerCase() === String(assignedTo).trim().toLowerCase()
       }
       return true
     })
-    .map(a => cleanTime(a.time))
+    .map(a => toMinutes(cleanTime(a.time)))
 
   return TIME_SLOTS.map(t => {
-    const t2 = cleanTime(t)
-    const isTaken = taken.includes(t2)
+    const t2  = cleanTime(t)
+    const tMin = toMinutes(t2)
+    // Blocked if new slot overlaps any existing appointment:
+    // Two 60-min appointments at S and T overlap if |T - S| < SERVICE_DURATION
+    const isTaken = takenMins.some(s => Math.abs(tMin - s) < SERVICE_DURATION)
     const isPast  = isToday && (() => {
       const [h,m] = t2.split(':').map(Number)
       const slot  = new Date(); slot.setHours(h,m,0,0)

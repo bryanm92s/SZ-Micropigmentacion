@@ -481,19 +481,23 @@ function createCalEvent(evt) {
     const desc  = buildEventDesc(evt);
     const assignedEmail = (evt.assignedTo || '').trim().toLowerCase();
     const adminEmail    = getAdminEmail().trim().toLowerCase();
+    const defaultCal    = CalendarApp.getDefaultCalendar();
     const result = { ok: true };
 
-    // Crear en calendario del assignedTo
+    // Intentar obtener el calendario de la empleada
     const assignedCal = getCalendarForUser(assignedEmail);
+    const usingFallback = assignedCal.getId() === defaultCal.getId();
+
+    // Crear evento en el calendario de la empleada (o en el del admin si no tiene propio)
     const assignedEvent = assignedCal.createEvent(title, s, e, { description: desc, sendInvites: false });
     assignedEvent.setColor(CalendarApp.EventColor.MAUVE);
     result.eventId = assignedEvent.getId();
 
-    // Si el assignedTo NO es la admin, crear también en el calendario de la admin
-    if (assignedEmail && assignedEmail !== adminEmail) {
+    // Solo crear copia admin si la empleada tiene su PROPIO calendario
+    // (si usó fallback al calendar del admin, el evento ya está ahí → no duplicar)
+    if (assignedEmail && assignedEmail !== adminEmail && !usingFallback) {
       try {
-        const adminCal   = CalendarApp.getDefaultCalendar();
-        const adminEvent = adminCal.createEvent(title, s, e, { description: desc, sendInvites: false });
+        const adminEvent = defaultCal.createEvent(title, s, e, { description: desc, sendInvites: false });
         adminEvent.setColor(CalendarApp.EventColor.MAUVE);
         result.adminEventId = adminEvent.getId();
       } catch(ex) { result.adminEventError = ex.message; }
