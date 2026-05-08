@@ -1215,13 +1215,13 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
   const sortG = arr => [...arr].sort((a,b)=>`${cleanDate(a.date)}${cleanTime(a.time)}`.localeCompare(`${cleanDate(b.date)}${cleanTime(b.time)}`))
 
   const toggleCompleted = (a, newStatus) => {
-    // cycle: pending -> done -> pending; noshow is a separate button
     const cur = a.completed==='noshow'?'noshow': bool(a.completed)?'done':'pending'
     let next_val
     if (newStatus==='done')   next_val = cur==='done'   ? false : true
     if (newStatus==='noshow') next_val = cur==='noshow' ? false : 'noshow'
     const next = appts.map(x=>x.id===a.id?{...x,completed:next_val}:x)
     SA(next)
+    sync({appointments:next}, null, null)  // persist immediately
   }
 
   if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin} userName={userName} users={users} userNameMap={userNameMap}/>
@@ -1642,7 +1642,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
   const selSvcs   = (Array.isArray(services)?services:[]).filter(s=>svcIds.includes(s.id))
   const svcTotal  = selSvcs.reduce((s,x)=>s+toN(x.price),0)
   const grand     = svcTotal+(dom?toN(domP):0)
-  const slots     = getSlots(date,[],appts,null, isAdmin ? assignedTo : null)
+  const slots     = getSlots(date,[],appts,null, isAdmin ? assignedTo : (userEmail||null))
 
   // Conflicto: ¿la empleada asignada ya tiene cita en esa fecha y hora?
   const conflictNW = isAdmin && assignedTo && date && time
@@ -2434,7 +2434,8 @@ function MonthComparison({appts,expenses,setTab}) {
 ══════════════════════════════════════════════════════════════ */
 function TopServices({appts,setTab}) {
   const safeA = Array.isArray(appts)?appts:[]
-  const [period, setPeriod] = useState('all') // 'all' | '3m' | '6m' | 'year'
+  const [period, setPeriod] = useState('all')
+  const [view,   setView]   = useState('revenue') // 'revenue' | 'demand'
 
   const now = new Date()
   const cutoff = {
@@ -2449,13 +2450,12 @@ function TopServices({appts,setTab}) {
     (!cutoff || cleanDate(a.date).slice(0,7) >= cutoff)
   )
 
-  // Build service stats
   const stats = {}
   completedAppts.forEach(a => {
-    const names = String(a.serviceNames||'').split(',').map(s=>s.trim()).filter(Boolean)
-    const ids   = String(a.serviceIds||'').split(',').map(s=>s.trim()).filter(Boolean)
-    const total = toN(a.servicePrice)
-    const perSvc= names.length ? total/names.length : total
+    const names  = String(a.serviceNames||'').split(',').map(s=>s.trim()).filter(Boolean)
+    const ids    = String(a.serviceIds||'').split(',').map(s=>s.trim()).filter(Boolean)
+    const total  = toN(a.servicePrice)
+    const perSvc = names.length ? total/names.length : total
     names.forEach((name,i) => {
       if (!stats[name]) stats[name] = {name, revenue:0, count:0, id:ids[i]||''}
       stats[name].revenue += perSvc
@@ -2463,9 +2463,11 @@ function TopServices({appts,setTab}) {
     })
   })
 
-  const ranked = Object.values(stats).sort((a,b)=>b.revenue-a.revenue)
-  const totalRev = ranked.reduce((s,x)=>s+x.revenue,0)
-  const maxRev   = ranked[0]?.revenue || 1
+  const byRevenue = Object.values(stats).sort((a,b)=>b.revenue-a.revenue)
+  const byDemand  = Object.values(stats).sort((a,b)=>b.count-a.count || b.revenue-a.revenue)
+  const ranked    = view==='revenue' ? byRevenue : byDemand
+  const totalRev  = byRevenue.reduce((s,x)=>s+x.revenue,0)
+  const maxVal    = view==='revenue' ? (ranked[0]?.revenue||1) : (ranked[0]?.count||1)
 
   const MEDALS = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49']
   const COLORS  = ['var(--primary)','var(--gold)','var(--green)','#7A9FC4','#A47AC4','#C47AA4']
@@ -2473,52 +2475,69 @@ function TopServices({appts,setTab}) {
   return (
     <div>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
-        <button className="btn-sm" onClick={()=>setTab('finances')}>{'←'} Volver</button>
-        <span style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:600}}>Servicios rentables</span>
+        <button className="btn-sm" onClick={()=>setTab('finances')}>{'<-'} Volver</button>
+        <span style={{fontFamily:'Georgia,serif',fontSize:20,fontWeight:600}}>Servicios</span>
       </div>
 
-      {/* Period filter */}
-      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+      <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
         {[['all','Todo'],['3m','3 meses'],['6m','6 meses'],['year','Este año']].map(([v,l])=>(
           <button key={v} onClick={()=>setPeriod(v)}
-            style={{background:period===v?'var(--primary)':'white',color:period===v?'white':'var(--t2)',border:'1.5px solid',borderColor:period===v?'var(--primary)':'var(--border)',borderRadius:20,padding:'6px 14px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
+            style={{background:period===v?'var(--primary)':'var(--card)',color:period===v?'white':'var(--t2)',border:'1.5px solid',borderColor:period===v?'var(--primary)':'var(--border)',borderRadius:20,padding:'6px 14px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
             {l}
           </button>
         ))}
       </div>
 
-      {/* Total summary */}
+      <div style={{display:'flex',gap:8,marginBottom:16}}>
+        {[['revenue','💰 Por ingresos'],['demand','🔥 Por demanda']].map(([v,l])=>(
+          <button key={v} onClick={()=>setView(v)}
+            style={{flex:1,padding:'10px',borderRadius:12,border:`2px solid ${view===v?'var(--primary)':'var(--border)'}`,background:view===v?'var(--primary-l)':'var(--card)',color:view===v?'var(--primary)':'var(--t2)',fontWeight:700,fontSize:13,cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
       <div style={{background:'linear-gradient(135deg,var(--primary),var(--primary-d))',borderRadius:14,padding:'14px 18px',marginBottom:14,color:'white',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <div>
-          <div style={{fontSize:10,opacity:.8,textTransform:'uppercase',letterSpacing:'.08em',fontWeight:600,marginBottom:4}}>Total generado</div>
-          <div style={{fontFamily:'Georgia,serif',fontSize:24,fontWeight:700}}>{fmtM(totalRev)}</div>
-          <div style={{fontSize:11,opacity:.7,marginTop:2}}>{completedAppts.length} citas completadas · {ranked.length} servicios</div>
+          <div style={{fontSize:10,opacity:.8,textTransform:'uppercase',letterSpacing:'.08em',fontWeight:600,marginBottom:4}}>
+            {view==='revenue' ? 'Total generado' : 'Servicios realizados'}
+          </div>
+          <div style={{fontFamily:'Georgia,serif',fontSize:24,fontWeight:700}}>
+            {view==='revenue' ? fmtM(totalRev) : completedAppts.length+' citas'}
+          </div>
+          <div style={{fontSize:11,opacity:.7,marginTop:2}}>{ranked.length} servicios distintos</div>
         </div>
-        <div style={{fontSize:32}}>✨</div>
+        <div style={{fontSize:32}}>{view==='revenue'?'💰':'🔥'}</div>
       </div>
 
       {ranked.length===0
-        ?<div className="card" style={{textAlign:'center',padding:30,color:'var(--t2)'}}>Sin datos de citas completadas para este período</div>
-        :<div className="card">
+        ? <div className="card" style={{textAlign:'center',padding:30,color:'var(--t2)'}}>Sin datos de citas completadas para este período</div>
+        : <div className="card">
           {ranked.map((svc,i)=>{
-            const pct     = totalRev>0 ? Math.round(svc.revenue/totalRev*100) : 0
-            const barPct  = Math.round(svc.revenue/maxRev*100)
-            const color   = COLORS[i%COLORS.length]
+            const barVal = view==='revenue' ? svc.revenue : svc.count
+            const barPct = Math.round(barVal/maxVal*100)
+            const color  = COLORS[i%COLORS.length]
             return (
               <div key={svc.name} style={{padding:'14px 0',borderBottom:i<ranked.length-1?'1px solid var(--border)':'none'}}>
-                <div style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:8}}>
-                  <div style={{fontSize:20,flexShrink:0,lineHeight:1}}>{i<3?MEDALS[i]:<span style={{fontSize:14,fontWeight:700,color:'var(--t2)',minWidth:20,display:'inline-block',textAlign:'center'}}>{i+1}</span>}</div>
+                <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+                  <div style={{fontSize:20,flexShrink:0,lineHeight:1,marginTop:2}}>
+                    {i<3?MEDALS[i]:<span style={{fontSize:14,fontWeight:700,color:'var(--t2)',minWidth:20,display:'inline-block',textAlign:'center'}}>{i+1}</span>}
+                  </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:4}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:5}}>
                       <span style={{fontWeight:700,fontSize:14,color:'var(--t)'}}>{svc.name}</span>
-                      <span style={{fontWeight:800,fontSize:15,color}}>{fmtM(Math.round(svc.revenue))}</span>
+                      <span style={{fontWeight:800,fontSize:15,color}}>
+                        {view==='revenue' ? fmtM(Math.round(svc.revenue)) : `${svc.count} ${svc.count===1?'vez':'veces'}`}
+                      </span>
                     </div>
-                    <div style={{background:'var(--border)',borderRadius:4,height:8,overflow:'hidden',marginBottom:6}}>
+                    <div style={{background:'var(--border)',borderRadius:4,height:7,overflow:'hidden',marginBottom:5}}>
                       <div style={{width:`${barPct}%`,height:'100%',background:color,borderRadius:4,transition:'width .6s ease'}}/>
                     </div>
-                    <div style={{display:'flex',gap:14,fontSize:11,color:'var(--t2)'}}>
-                      <span style={{fontWeight:600}}>{svc.count===1?'1 vez':`${svc.count} veces`}</span>
-                      <span>{pct}% del total</span>
+                    <div style={{fontSize:11,color:'var(--t2)'}}>
+                      {view==='revenue'
+                        ? <span>{svc.count===1?'1 vez':`${svc.count} veces`}</span>
+                        : <span>Total generado: <strong style={{color:'var(--t)'}}>{fmtM(Math.round(svc.revenue))}</strong></span>
+                      }
                     </div>
                   </div>
                 </div>
@@ -2527,12 +2546,9 @@ function TopServices({appts,setTab}) {
           })}
         </div>
       }
-
-
     </div>
   )
 }
-
 /* ══════════════════════════════════════════════════════════════
    INCOME DETAIL — with pending filter via tabExtra
 ══════════════════════════════════════════════════════════════ */
