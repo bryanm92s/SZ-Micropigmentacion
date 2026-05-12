@@ -266,7 +266,13 @@ export default function App() {
   }, [])
 
   useEffect(() => { refresh() }, [])
-  useEffect(() => { const i=setInterval(()=>refresh(true),30*1000); return()=>clearInterval(i) }, [refresh])
+  useEffect(() => {
+    const i = setInterval(() => {
+      // No refrescar si hay un guardado en curso — evita race condition
+      if (status !== 'saving') refresh(true)
+    }, 30*1000)
+    return () => clearInterval(i)
+  }, [refresh, status])
 
   const sync = useCallback(async (payload, setter, value) => {
     if (setter) setter(value)
@@ -276,8 +282,8 @@ export default function App() {
     try {
       const r=await saveData(payload, userEmail)
       setSt('ok'); setLS(new Date())
-      // Refresh silently after save so all clients see latest data
-      setTimeout(()=>refresh(true), 800)
+      // Refresh after save — 1.5s delay ensures Sheets write has propagated
+      setTimeout(()=>refresh(true), 1500)
       return r
     }
     catch(e) { setEM(e.message); setSt('error'); setTimeout(()=>setSt('ok'),5000); return null }
