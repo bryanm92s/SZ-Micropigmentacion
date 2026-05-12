@@ -79,31 +79,20 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
         </div>
       </div>
       {/* Gastos */}
+      {/* Gastos e Ingresos */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
         <div onClick={onGoGastos}
           style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center',cursor:onGoGastos?'pointer':'default',transition:'opacity .15s'}}
           onMouseEnter={e=>{if(onGoGastos)e.currentTarget.style.opacity='.75'}}
           onMouseLeave={e=>{e.currentTarget.style.opacity='1'}}>
           <div style={{fontSize:24,fontWeight:800,color:'var(--gold)'}}>{user.gastos}</div>
-          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600}}>Gastos reg. {onGoGastos&&<span style={{color:'var(--gold)'}}>→</span>}</div>
+          <div style={{fontSize:11,fontWeight:800,color:'var(--gold)'}}>${fmt(user.montoGastos||0)}</div>
+          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600,marginTop:2}}>🧾 Gastos {onGoGastos&&<span style={{color:'var(--gold)'}}>→</span>}</div>
         </div>
-        <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
-          <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
-          <div style={{fontSize:10,color:'var(--t2)',fontWeight:600,marginTop:2}}>🧾 Total gastos</div>
-        </div>
-      </div>
-
-      {/* Ingresos y Gastos en dinero */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
         <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
           <div style={{fontSize:13,fontWeight:800,color:'var(--green)'}}>${fmt(user.ingresos||0)}</div>
           <div style={{fontSize:10,color:'var(--green)',fontWeight:600,marginTop:2}}>💰 Ingresos</div>
           <div style={{fontSize:9,color:'var(--t2)',marginTop:1}}>citas completadas</div>
-        </div>
-        <div style={{background:'var(--primary-l)',borderRadius:10,padding:'10px',textAlign:'center'}}>
-          <div style={{fontSize:13,fontWeight:800,color:P}}>${fmt(user.montoGastos||0)}</div>
-          <div style={{fontSize:10,color:'var(--primary)',fontWeight:600,marginTop:2}}>🧾 Gastos</div>
-          <div style={{fontSize:9,color:'var(--t2)',marginTop:1}}>total registrado</div>
         </div>
       </div>
 
