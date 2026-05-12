@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import { updateUserRole } from './api.js'
 
+const localDateStr = (d=new Date()) => {
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0')
+  return `${y}-${m}-${dd}`
+}
+
 const P  = '#B85C6E'
 const PL = '#FDF6F0'
 const PB = '#F5D0D8'
