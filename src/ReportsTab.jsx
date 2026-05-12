@@ -11,17 +11,6 @@ const monthLabel = m => {
   const names = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
   return `${names[parseInt(mo)-1]} ${y}`
 }
-const getMonthOptions = () => {
-  const opts = []
-  const now = new Date()
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
-    opts.push(val)
-  }
-  return opts
-}
-
 /* ── Colores por usuario ── */
 const USER_COLORS = ['#B85C6E','#6366F1','#0891B2','#059669','#D97706','#7C3AED']
 const userColor = email => USER_COLORS[
@@ -137,14 +126,19 @@ function UserCard({ user, color, isCurrentUser, onGoCitas, onGoGastos }) {
    REPORTS TAB
 ══════════════════════════════════════════════════════════════ */
 export default function ReportsTab({ userEmail, userRole, sync, expenses, clients, appts, SE, setTab, users: allUsers }) {
-  const months   = getMonthOptions()
-  const nowMonth = months[0]
-  const [month,     setMonth]     = useState(nowMonth)
+  const [month,     setMonth]     = useState(localDateStr().slice(0,7))
   const [roleTab,   setRoleTab]   = useState(false)
 
   const safeExpenses = Array.isArray(expenses) ? expenses : []
   const safeAppts    = Array.isArray(appts)    ? appts    : []
   const safeUsers    = Array.isArray(allUsers) ? allUsers : []
+
+  // Build month list from actual data (includes past AND future months with activity)
+  const months = [...new Set([
+    localDateStr().slice(0,7),                              // always include current month
+    ...safeExpenses.map(e=>String(e.date||'').slice(0,7)),
+    ...safeAppts.map(a=>String(a.date||'').slice(0,7)),
+  ].filter(m=>/^\d{4}-\d{2}$/.test(m)))].sort((a,b)=>b.localeCompare(a))
 
   // Calcular todo desde datos en vivo — no desde auditoría
   // Así aparecen todos los usuarios aunque no hayan creado nada ese mes
@@ -158,11 +152,12 @@ export default function ReportsTab({ userEmail, userRole, sync, expenses, client
           && d.slice(0,7) === month
     }).length
 
-    // Citas atendidas: donde esta persona ES la que atiende (assignedTo)
+    // Citas atendidas: completadas que atendió esta persona (mismo filtro que ingresos)
     const citasAtendidas = safeAppts.filter(a => {
       const d = typeof a.date === 'string' ? a.date : ''
       return String(a.assignedTo||'').trim().toLowerCase() === email
           && d.slice(0,7) === month
+          && (a.completed === true || a.completed === 'true')
     })
 
     // Ingresos: citas completadas que atendió esta persona
