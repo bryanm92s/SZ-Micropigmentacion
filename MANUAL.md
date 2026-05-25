@@ -1,312 +1,365 @@
 # 📖 Manual de Usuario — SZ Micropigmentación
+### Sistema de Gestión de Citas, Clientes y Finanzas
+
+---
 
 ## Tabla de contenido
 
 1. [Acceso al sistema](#1-acceso-al-sistema)
-2. [Panel principal (Dashboard)](#2-panel-principal-dashboard)
-3. [Citas](#3-citas)
-4. [Clientes](#4-clientes)
-5. [Servicios](#5-servicios--solo-administradora)
-6. [Finanzas](#6-finanzas--solo-administradora)
-7. [Mis Gastos](#7-mis-gastos--empleada)
-8. [Reportes](#8-reportes--solo-administradora)
-9. [Configuración de cuenta](#9-configuración-de-cuenta)
-10. [Preguntas frecuentes](#10-preguntas-frecuentes)
+2. [Roles de usuario](#2-roles-de-usuario)
+3. [Panel principal](#3-panel-principal)
+4. [Citas](#4-citas)
+5. [Clientes](#5-clientes)
+6. [Servicios](#6-servicios)
+7. [Finanzas](#7-finanzas--solo-administradora)
+8. [Mis Gastos](#8-mis-gastos--empleada)
+9. [Reportes](#9-reportes--solo-administradora)
+10. [Configuración](#10-configuración)
+11. [Preguntas frecuentes](#11-preguntas-frecuentes)
 
 ---
 
 ## 1. Acceso al sistema
 
 ### Iniciar sesión
-1. Ingresa al enlace de la aplicación
+1. Abre el enlace de la aplicación en tu navegador o celular
 2. Escribe tu correo y contraseña
-3. Clic en **Ingresar**
+3. Toca **Ingresar**
 
 ### Crear cuenta (primera vez)
 Solo puedes registrarte si la administradora ya agregó tu correo en el sistema.
 
-1. En la pantalla de login, clic en **Crear cuenta**
-2. Escribe tu correo, nombre y contraseña
-3. Clic en **Registrarme**
+1. En la pantalla de login, toca **Crear cuenta**
+2. Escribe tu correo, nombre completo y contraseña
+3. Toca **Registrarme**
 
-> Si ves el error *"Este correo no está autorizado"*, contacta a la administradora para que agregue tu correo.
+> Si aparece *"Este correo no está autorizado"*, contacta a la administradora para que agregue tu correo en Google Sheets.
 
 ### Recuperar contraseña
-1. En la pantalla de login, clic en **¿Olvidaste tu contraseña?**
+1. Toca **¿Olvidaste tu contraseña?**
 2. Escribe tu correo
-3. Recibirás un correo con un enlace válido por **1 hora**
-4. Sigue el enlace y escribe tu nueva contraseña
+3. Recibirás un código de 6 dígitos al correo — válido por **1 hora**
+4. Ingresa el código y escribe tu nueva contraseña
+
+### Cerrar sesión
+Toca tu nombre en la esquina superior derecha → **🚪 Cerrar sesión**
 
 ---
 
-## 2. Panel principal (Dashboard)
+## 2. Roles de usuario
 
-El panel muestra un resumen del negocio al abrir la app.
-
-### Como Administradora verás:
-- **Ingresos del mes** — total de citas completadas en el mes actual
-- **Gastos del mes** — total de gastos registrados
-- **Neto del mes** — ingresos menos gastos
-- **Citas pendientes hoy** — número de citas de hoy sin completar
-- **Citas próximas** — resumen de los siguientes días
-
-### Como Empleada verás:
-- Tus citas del día y próximas
-- Acceso rápido a crear nueva cita
+| Función | Administradora | Empleada |
+|---|:---:|:---:|
+| Ver todas las citas | ✅ | ❌ Solo propias |
+| Crear citas y asignar empleada | ✅ | ✅ Solo para sí misma |
+| Reasignar citas | ✅ | ❌ |
+| Gestión de clientes | ✅ | ✅ |
+| Catálogo de servicios | ✅ | Solo lectura |
+| Finanzas e ingresos | ✅ | ❌ |
+| Gastos | ✅ Todos | ✅ Solo propios |
+| Crear/eliminar categorías de gasto | ✅ | ❌ |
+| Reportes del equipo | ✅ | ❌ |
+| Configuración visual | ✅ | ✅ |
+| Restablecer el sistema | ✅ | ❌ |
 
 ---
 
-## 3. Citas
+## 3. Panel principal
 
-La pestaña **Citas** muestra la agenda organizada en grupos:
+**Administradora:** ingresos del mes, gastos, neto, citas pendientes hoy y accesos rápidos.
+
+**Empleada:** sus citas del día, próximas y acceso rápido a nueva cita.
+
+---
+
+## 4. Citas
+
+### Grupos de la agenda
 
 | Grupo | Descripción |
 |---|---|
-| 🔴 Hoy | Citas del día de hoy |
+| 🔴 Hoy | Citas del día |
 | 🟠 Mañana | Citas de mañana |
-| 🔵 Próximas | Citas desde pasado mañana en adelante |
-| ⚫ No asistió | Citas marcadas como no show |
-| 🩶 Pasadas | Citas anteriores sin completar |
+| 🔵 Próximas | Desde pasado mañana |
+| ⚫ No asistió | Marcadas como no show |
+| 🩶 Pasadas | Anteriores sin completar |
+
+---
 
 ### Crear una nueva cita
 
-1. Clic en **+ Nueva cita**
-2. Sigue los 5 pasos del asistente:
+Toca **+ Nueva cita** y sigue los 5 pasos:
 
 **Paso 1 — Cliente**
-- Busca por nombre o celular
-- Si no existe, clic en **+ Nuevo cliente** y llena sus datos
+Busca por nombre o celular. Si no existe, toca **+ Nuevo cliente**.
 
 **Paso 2 — Servicio(s)**
-- Selecciona uno o más servicios de la lista
-- El total se calcula automáticamente
+Selecciona uno o más. El total se calcula automáticamente.
+
+> 💡 Para **descuentos o promociones**, crea el servicio con precio promocional (ej: "Lifting - Promo"). Al terminar la promo puedes eliminarlo del catálogo — las citas y reportes conservan el precio histórico.
 
 **Paso 3 — Domicilio (opcional)**
-- Activa si la cita es a domicilio
-- Escribe la dirección y el costo adicional
+Activa si es a domicilio, escribe la dirección y el costo adicional.
 
 **Paso 4 — Fecha y hora**
-- Selecciona la fecha en el calendario
-- Elige una hora disponible (las ocupadas aparecen en gris)
-- > ⚠️ Si eres **Administradora** y asignas la cita a una empleada, los horarios bloqueados corresponden a la agenda de esa empleada específica
+Selecciona fecha y elige un horario disponible.
 
-**Paso 4.5 — Empleada que atenderá** *(solo Administradora)*
-- Selecciona la empleada del menú desplegable
-- Si la empleada ya tiene cita en ese horario, el sistema bloquea el slot automáticamente
+**Reglas de disponibilidad:**
+- Cada servicio dura **1 hora** — el sistema bloquea los 60 minutos siguientes
+- Cita a las 7:30 PM → bloquea 7:00, 7:30 y 8:00 PM
+- El slot 8:30 PM queda libre (empieza exactamente cuando termina la anterior)
+- La validación es **por empleada** — cada quien maneja su propio horario independiente
 
-**Paso 5 — Resumen y confirmar**
-- Revisa todos los datos
-- Clic en **Confirmar cita** para guardar
+**Paso 4.5 — Atendida por** *(solo Administradora)*
+Selecciona la empleada. Si ya tiene cita en ese horario, el slot queda bloqueado.
+
+**Paso 5 — Confirmar**
+Revisa el resumen y toca **Confirmar cita**.
 
 ---
 
 ### Editar una cita
 
-1. Toca la cita en la agenda para expandirla
-2. Clic en el ícono ✏️
-3. Modifica los datos que necesites
-4. > ⚠️ **Administradora**: puedes reasignar la cita a otra empleada desde el campo "Atendida por". Si esa empleada ya tiene cita en ese horario, el botón "Guardar" se desactivará.
-5. Clic en **Guardar cambios**
+1. Toca la cita para expandirla → ✏️ **Editar**
+2. Modifica los datos
+3. Toca **Guardar cambios**
+
+> Al cambiar la empleada asignada, el evento de Calendar se elimina del calendario anterior y se crea en el de la nueva empleada.
 
 ---
 
-### Marcar citas
+### Marcar estado
 
-Dentro de cada cita hay dos botones de estado:
-
-| Botón | Acción |
+| Botón | Efecto |
 |---|---|
-| ✅ Completada | Marca la cita como realizada (suma a ingresos) |
-| 🚫 No asistió | Marca como no show (no suma a ingresos) |
+| ✅ Completada | Suma a ingresos y reportes |
+| ✗ No asistió | No suma a ingresos |
 
-> Puedes desmarcar tocando el mismo botón de nuevo.
+Toca el mismo botón para desmarcar. El cambio se guarda inmediatamente.
 
 ---
 
 ### Recordatorio por WhatsApp
 
-Dentro de cada cita, toca el ícono de WhatsApp 💬. Se abre WhatsApp con un mensaje pre-escrito con los datos de la cita lista para enviar al cliente.
+Toca 💬 en cualquier cita pendiente. Se abre WhatsApp con el mensaje preparado que incluye:
+- Servicio, fecha y hora
+- Total a pagar
+- 👩‍💼 Será atendida por: [nombre]
+- Indicación de domicilio si aplica
 
 ---
 
 ### Eliminar una cita
 
-1. Expande la cita
-2. Toca el ícono 🗑️
-3. Confirma la eliminación
-
-> Si la cita tenía un evento en Google Calendar, este también se eliminará automáticamente.
+Expande la cita → 🗑️ → Confirma. El evento de Google Calendar se elimina automáticamente.
 
 ---
 
-## 4. Clientes
+### Google Calendar
 
-### Ver clientes
-La pestaña **Clientes** muestra la lista completa ordenada por nombre. Usa el buscador para filtrar por nombre o celular.
+Cada cita genera automáticamente:
+- Evento en el calendario de la **empleada que la atiende**
+- Copia en el calendario de la **administradora**
 
-### Agregar un cliente
-1. Clic en **+ Nuevo cliente**
-2. Llena nombre y celular
-3. Clic en **Guardar**
-
-### Ver historial de un cliente
-1. Busca el cliente
-2. Clic en **Historial**
-3. Verás todas sus citas pasadas y futuras, incluyendo **quién la atendió** en cada visita
-
-### Editar o eliminar un cliente
-Dentro de la tarjeta del cliente hay botones para ✏️ editar o 🗑️ eliminar.
-
-> No se puede eliminar un cliente si tiene citas registradas.
+Al reasignar, el evento se mueve al calendario correspondiente.
+Al eliminar, el evento desaparece de todos los calendarios.
 
 ---
 
-## 5. Servicios *(solo Administradora)*
+## 5. Clientes
 
-### Ver y editar servicios
-La pestaña **Servicios** muestra el catálogo con nombre y precio de cada servicio.
+### Buscar y agregar
+- Buscador por nombre o celular en la pestaña Clientes
+- **+ Nuevo cliente** → nombre y celular → Guardar
 
-### Agregar un servicio
-1. Clic en **+ Nuevo servicio**
-2. Escribe el nombre y el precio
-3. Clic en **Guardar**
+### Historial
+Toca **Historial** en la tarjeta del cliente para ver todas sus citas con estado y quién la atendió.
+
+### Editar / Eliminar
+Botones ✏️ y 🗑️ en cada tarjeta. No se puede eliminar un cliente con citas activas.
+
+---
+
+## 6. Servicios
+
+*(Solo Administradora puede gestionar)*
+
+### Agregar
+**+ Nuevo servicio** → nombre y precio → Guardar.
 
 ### Editar precio
-Toca ✏️ en el servicio, cambia el precio y guarda.
+Toca ✏️. El nuevo precio aplica solo a citas futuras — las existentes conservan el precio original.
 
-> Cambiar el precio de un servicio **no afecta** las citas ya creadas — cada cita guarda el precio al momento de crearse.
-
-### Eliminar un servicio
-Toca 🗑️ y confirma. Solo se puede eliminar si el servicio no está asignado a citas activas.
+### Eliminar
+Toca 🗑️. Las citas y reportes existentes conservan el nombre y precio histórico.
 
 ---
 
-## 6. Finanzas *(solo Administradora)*
-
-La pestaña **Finanzas** tiene cuatro secciones:
+## 7. Finanzas *(solo Administradora)*
 
 ### Resumen del mes
-- Total de ingresos (citas completadas)
-- Total de gastos
-- Neto (ingresos − gastos)
-- Selector de mes para navegar al historial
+Ingresos · Gastos · Neto. Usa el selector para ver meses anteriores.
 
 ### Ingresos
-- Lista detallada de citas completadas en el mes
-- Filtra por estado: Todas / Completadas / Pendientes / No asistió
+Citas completadas del mes con detalle de servicios y montos.
 
 ### Gastos
-- Lista de todos los gastos del mes (de todas las empleadas)
-- Cada gasto muestra quién lo registró
-- Puedes **agregar**, **editar** y **eliminar** gastos
-- Puedes **crear nuevas categorías** de gasto (ej: Marketing, Capacitaciones)
+Todos los gastos del mes (de todas las usuarias), con quién los registró.
 
-**Agregar un gasto:**
-1. Escribe la descripción (se formatea automáticamente con mayúscula inicial)
-2. Ingresa el monto
-3. Selecciona la fecha
-4. Elige o crea una categoría
-5. Clic en **Registrar gasto**
+**Agregar gasto:**
+1. Descripción (primera letra en mayúscula automáticamente)
+2. Monto y fecha
+3. Categoría — o crea una nueva con **+ Nueva categoría**
+4. **Registrar gasto**
 
-### Comparación y Top Servicios
-- **Comparación mensual**: gráfico de ingresos vs gastos de los últimos meses
-- **Top servicios**: ranking de servicios más solicitados del mes
+**Categorías disponibles:** Insumos · Arriendo · Publicidad · Servicios · Transporte · Gasolina · Otros
 
----
+**Eliminar una categoría:**
+Aparecen como chips con **×**. El × solo se activa si ningún gasto usa esa categoría actualmente.
 
-## 7. Mis Gastos *(Empleada)*
+### Comparación mensual
+Gráfico de ingresos vs gastos de los últimos meses.
 
-Las empleadas tienen su propio módulo de gastos donde solo ven los gastos que ellas mismas registraron.
+### Servicios rentables
 
-### Registrar un gasto
-1. Escribe la descripción
-2. Ingresa el monto
-3. Selecciona la fecha
-4. Elige una categoría de la lista (no se pueden crear categorías nuevas)
-5. Clic en **Registrar gasto**
+Dos vistas con botón toggle:
 
-> La descripción se capitaliza automáticamente (primera letra en mayúscula).
+**💰 Por ingresos** — ordena por dinero generado. Muestra el total acumulado histórico respetando el precio de cada cita.
 
-### Ver historial por mes
-Usa el selector de mes en la parte superior para ver gastos de meses anteriores.
+Ejemplo: 2 Lifting a $85.000 = $170.000. Luego precio sube a $90.000 y se hace 1 más = $170.000 + $90.000 = **$260.000 en 3 servicios**.
+
+**🔥 Por demanda** — ordena por veces realizado. Muestra cuántas veces se hizo y el total generado.
+
+Filtra por período: Todo / 3 meses / 6 meses / Este año.
 
 ---
 
-## 8. Reportes *(solo Administradora)*
+## 8. Mis Gastos *(Empleada)*
 
-La pestaña **Reportes** muestra el desempeño del equipo en el mes seleccionado.
+Solo se ven y gestionan los gastos propios.
 
-### Qué muestra cada tarjeta de empleada:
-- Nombre y correo
-- **Citas creadas** en el mes
-- **Gastos registrados** en el mes
-- **Total en gastos** (suma de montos)
+**Registrar gasto:**
+1. Descripción, monto y fecha
+2. Categoría de la lista *(no se pueden crear nuevas — las crea la administradora)*
+3. **Registrar gasto**
 
-### Navegar a detalle:
-- Toca el recuadro **Citas creadas** → va directo a la lista de citas
-- Toca el recuadro **Gastos registrados** → va al detalle de gastos de ese mes
-
-En ambos casos, al presionar **← Reportes** vuelves a la pantalla de reportes (no a Finanzas).
-
-### Cambiar de mes
-Usa el selector en la parte superior del reporte para ver otros meses.
+Usa el selector de mes para ver el historial.
 
 ---
 
-## 9. Configuración de cuenta
+## 9. Reportes *(solo Administradora)*
 
-### Cambiar contraseña
-1. Toca tu nombre en la esquina superior derecha
-2. Clic en **🔑 Cambiar contraseña**
-3. Escribe tu contraseña actual y la nueva
-4. Clic en **Guardar**
+Los datos se calculan **en tiempo real** desde citas y gastos actuales.
 
-### Cerrar sesión
-1. Toca tu nombre en la esquina superior derecha
-2. Clic en **🚪 Cerrar sesión**
+### Tarjeta por usuaria
 
----
+| Indicador | Descripción |
+|---|---|
+| ✏️ Citas creadas | Citas que esa persona ingresó al sistema |
+| 👩‍💼 Citas atendidas | Citas que esa persona completó (marcadas ✅) |
+| 🧾 Gastos | Cantidad y monto total de gastos del mes |
+| 💰 Ingresos | Suma de citas completadas que atendió |
+| Neto del mes | Ingresos − Gastos (verde positivo, rojo negativo) |
 
-## 10. Preguntas frecuentes
+### Navegación
+- Toca **Citas creadas** → va a la lista de Citas → botón **← Reportes** para volver
+- Toca **Gastos** → va al Detalle de Gastos → botón **← Volver** regresa a Reportes
 
-**¿Por qué una hora aparece bloqueada en el calendario?**
-La hora puede estar bloqueada por dos razones:
-- La empleada asignada ya tiene una cita en ese horario ese día
-- La hora ya pasó (en el día de hoy)
+### Selector de mes
+Muestra todos los meses con actividad — incluyendo meses futuros si hay citas o gastos con fecha adelantada.
 
-Cambia de hora o de empleada para continuar.
+### Gestión de accesos *(pestaña Accesos)*
 
----
+Para cambiar el rol de una usuaria:
+1. Escribe su correo
+2. Selecciona **👑 Administradora** o **👤 Empleada**
+3. **Actualizar rol**
 
-**¿Por qué no puedo guardar una cita que estoy editando?**
-El botón "Guardar cambios" se desactiva si la empleada seleccionada ya tiene otra cita en la misma fecha y hora. El sistema muestra un aviso amarillo explicando el conflicto. Cambia la hora o la empleada asignada.
-
----
-
-**¿El cliente recibe el recordatorio automáticamente?**
-No. El recordatorio por WhatsApp se envía **manualmente** presionando el ícono de WhatsApp en la cita. La app prepara el mensaje pero tú decides cuándo enviarlo.
+> Para autorizar a una nueva usuaria, primero agrega su correo en la hoja **Usuarios** de Google Sheets, luego asígnale el rol aquí.
 
 ---
 
-**¿Qué pasa si pierdo conexión a internet?**
-La app funciona en modo sin conexión usando los últimos datos guardados en el dispositivo. Verás un aviso amarillo "⚠️ Modo sin conexión". Los cambios que hagas **no se guardarán** hasta recuperar la conexión.
+## 10. Configuración
+
+Accesible para todas las usuarias desde el ícono ⚙️ (última opción en la barra de navegación).
+
+### 🌗 Modo de visualización
+**☀️ Modo claro** o **🌙 Modo oscuro** — se guarda por dispositivo. Cada usuaria elige su preferencia independientemente.
+
+### 🎨 Paleta de colores
+
+| Paleta | | Paleta | |
+|---|---|---|---|
+| 💗 Fucsia | `#C04A82` | 🌿 Salvia | `#4A8C6E` |
+| 🌸 Rosa Blush | `#B5524A` | ✨ Ámbar | `#C08A2A` |
+| 💜 Lavanda | `#7C5CBF` | 🧡 Coral | `#C2664A` |
+| 💙 Azul Sereno | `#3A6EA8` | 🌊 Turquesa | `#2A8A8A` |
+| 🖤 Carbón | `#5A5A7A` | | |
+
+Al seleccionar una paleta aparece una **vista previa en tiempo real**. Los cambios aplican instantáneamente a toda la app incluyendo modo oscuro.
+
+### ⚠️ Restablecer el sistema *(solo Administradora)*
+
+Elimina permanentemente: clientes, citas, gastos, auditoría y eventos de Google Calendar.
+**Conserva:** servicios y usuarios.
+
+**Pasos:**
+1. Toca **Restablecer sistema…**
+2. Escribe exactamente `CONFIRMAR`
+3. Toca **Eliminar todo**
+
+> Esta acción **no se puede deshacer**.
 
 ---
 
-**¿Cómo agrego una nueva empleada?**
-Solo la administradora puede hacerlo, directamente en la hoja `Usuarios` de Google Sheets:
-1. Agregar una fila con el correo (columna A), rol `Empleada` (columna F) y nombre (columna G)
-2. La empleada puede registrar su contraseña desde la pantalla de login
+## 11. Preguntas frecuentes
+
+**¿Por qué un horario aparece bloqueado?**
+Los servicios duran 1 hora. Cita a las 7:30 PM → bloquea 7:00, 7:30 y 8:00 PM. El slot 8:30 PM está libre. La validación es por empleada: cada quien tiene su propia disponibilidad.
+
+---
+
+**¿Por qué no puedo guardar al editar?**
+Si la empleada asignada ya tiene cita en ese horario, el botón "Guardar" se desactiva. El aviso amarillo ⚠️ indica el conflicto. Cambia la hora o la empleada.
+
+---
+
+**¿La empleada ve los horarios ocupados de la administradora?**
+No. Al crear una cita, cada usuaria ve bloqueados únicamente sus propios horarios. La administradora ve la disponibilidad de la empleada que seleccione en "Atendida por".
+
+---
+
+**¿Por qué el precio histórico no cambia en reportes?**
+Cada cita guarda el precio al momento de crearla. Cambiar el precio del catálogo no afecta citas pasadas. "Servicios rentables" suma los valores reales de cada cita.
+
+---
+
+**¿Cómo manejo descuentos?**
+Crea el servicio con precio promocional (ej: "Lifting - Promo 50%"). Al terminar la promo, elimínalo. Las citas y reportes conservan el historial intacto. En reportes aparecerá como servicio separado con su propio total.
+
+---
+
+**¿El recordatorio de WhatsApp se envía automáticamente?**
+No. Se envía manualmente tocando 💬. La app prepara el mensaje completo pero tú decides cuándo enviarlo.
 
 ---
 
 **¿Los datos se guardan en tiempo real?**
-Sí. Cada vez que guardas, creas o eliminas algo, los cambios se sincronizan inmediatamente con Google Sheets. La app también se actualiza automáticamente cada 2 minutos en segundo plano.
+Sí. Cada acción se guarda inmediatamente. La app se actualiza en segundo plano cada 30 segundos. Si hay un guardado en curso, el auto-refresh espera para evitar conflictos.
 
 ---
 
 **¿Puedo usar la app desde el celular?**
-Sí, la interfaz está optimizada para móvil. Para una mejor experiencia puedes agregarla a la pantalla de inicio de tu teléfono como si fuera una app nativa.
+Sí. Para mejor experiencia, agrégala a la pantalla de inicio:
+- **iOS:** ícono compartir → "Agregar a pantalla de inicio"
+- **Android:** tres puntos → "Agregar a pantalla de inicio"
+
+---
+
+**¿Cómo agrego una nueva empleada?**
+1. Abre la hoja **Usuarios** en Google Sheets
+2. Agrega una fila: correo (col A) · rol `Empleada` (col F) · nombre (col G)
+3. La empleada registra su contraseña desde el login → "Crear cuenta"
 
 ---
 
