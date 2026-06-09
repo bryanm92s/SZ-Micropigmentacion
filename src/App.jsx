@@ -1367,16 +1367,26 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
   }
 
   const originalIds  = resolveInitialIds()
-  // Always use current catalogue price per service — that is the real individual price.
-  // We only show a strikethrough warning if the SUM of current prices differs from
-  // what was stored at booking time (meaning prices were edited after the fact).
-  const storedSvcTotal = toN(appt.servicePrice) || Math.max(0, toN(appt.totalPrice) - toN(appt.domicilioPrice))
+  // Use the per-service price snapshot saved at booking time (appt.servicePrices).
+  // For older appointments without that field, fall back to the current catalogue price.
+  // For newly added services (not in originalIds), always use the current catalogue price.
+  const savedPrices  = appt.servicePrices || {}
   const getPriceFor  = id => {
+    if (originalIds.includes(id)) {
+      const snap = savedPrices[id]
+      if (snap !== undefined) return toN(snap)
+      const svc = safeSvcs.find(s=>s.id===id)
+      return svc ? toN(svc.price) : 0
+    }
     const svc = safeSvcs.find(s=>s.id===id)
     return svc ? toN(svc.price) : 0
   }
-  const currentSvcSum  = originalIds.reduce((s,id)=>s+getPriceFor(id), 0)
-  const pricesChanged  = originalIds.length > 0 && storedSvcTotal > 0 && currentSvcSum !== storedSvcTotal
+  const pricesChanged = originalIds.some(id => {
+    const svc = safeSvcs.find(s=>s.id===id)
+    if (!svc) return false
+    const snap = savedPrices[id]
+    return snap !== undefined && toN(snap) !== toN(svc.price)
+  })
 
   const [date,    setDate]  = useState(cleanDate(appt.date)||todayStr())
   const [time,    setTime]  = useState(cleanTime(appt.time)||'')
@@ -1411,9 +1421,13 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
   const save = async () => {
     setL(true)
     const svcNames = selSvcs.map(s=>s.name).join(', ')
+    const updatedServicePrices = Object.fromEntries(
+      selSvcs.map(s => [s.id, getPriceFor(s.id)])
+    )
     const updated  = {
       ...appt, date, time:cleanTime(time)||time,
       serviceIds:selSvcs.map(s=>s.id).join(','), serviceNames:svcNames,
+      servicePrices:updatedServicePrices,
       servicePrice:svcTotal, domicilio:dom, domicilioPrice:dom?toN(domP):0,
       totalPrice:grand, address:dom?addr:'',
       assignedTo: isAdmin ? assignedTo : (appt.assignedTo||userEmail||'')
@@ -1480,8 +1494,8 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
           </div>
           <div style={{textAlign:'right',flexShrink:0}}>
             <span style={{fontWeight:700,color:'var(--primary)',fontSize:14}}>{fmtM(getPriceFor(s.id))}</span>
-            {originalIds.includes(s.id) && pricesChanged &&
-              <div style={{fontSize:10,color:'var(--t2)',marginTop:1}}>⚠️ precio editado</div>}
+            {originalIds.includes(s.id) && savedPrices[s.id] !== undefined && toN(savedPrices[s.id]) !== toN(s.price) &&
+              <div style={{fontSize:10,color:'var(--t2)',textDecoration:'line-through',marginTop:1}}>{fmtM(s.price)} actual</div>}
           </div>
         </button>
       ))}
@@ -1667,6 +1681,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
     const appt = {
       id:uid(), clientId:fc.id||'', clientName:fc.name, clientPhone:fc.phone,
       serviceIds:selSvcs.map(s=>s.id).join(','), serviceNames:svcNames,
+      servicePrices:Object.fromEntries(selSvcs.map(s=>[s.id, toN(s.price)])),
       servicePrice:svcTotal, domicilio:dom, domicilioPrice:dom?toN(domP):0,
       totalPrice:grand, address:dom?addr:'',
       date, time:cleanTime(time)||time,
