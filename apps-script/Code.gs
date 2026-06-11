@@ -4,7 +4,7 @@
 // ║  + Reportes por usuario                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-const SECRET_TOKEN = 'MiStudio2024$ecret';
+const SECRET_TOKEN = 'CAMBIA_TU_TOKEN';
 
 // Email de la Administradora — se detecta automáticamente como el dueño del script.
 // Se usa como función para evitar errores al inicializar con ANYONE_ANONYMOUS.
