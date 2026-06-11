@@ -4,7 +4,7 @@
 // ║  + Reportes por usuario                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-const SECRET_TOKEN = 'CAMBIA_ESTE_TOKEN';
+const SECRET_TOKEN = 'CAMBIA_TU_TOKEN';
 
 // Email de la Administradora — se detecta automáticamente como el dueño del script.
 // Se usa como función para evitar errores al inicializar con ANYONE_ANONYMOUS.
@@ -13,29 +13,31 @@ function getAdminEmail() {
 }
 
 const SHEETS = {
-  clients:     'Clientes',
-  services:    'Servicios',
-  appointments:'Citas',
-  expenses:    'Gastos',
-  users:       'Usuarios',
-  audit:       'Auditoría',
+  clients:      'Clientes',
+  services:     'Servicios',
+  appointments: 'Citas',
+  expenses:     'Gastos',
+  users:        'Usuarios',
+  audit:        'Auditoría',
+  priceHistory: 'HistorialPrecios',
 };
 
 const JS_KEYS = {
   clients:      ['id','name','phone','createdAt'],
   services:     ['id','name','price'],
   appointments: ['id','clientId','clientName','clientPhone',
-                 'serviceIds','serviceNames','servicePrice',
+                 'serviceIds','serviceNames','servicePrice','servicePrices',
                  'domicilio','domicilioPrice','totalPrice','address',
                  'date','time','createdAt','calendarCreated','calendarEventId','adminEventId','completed','assignedTo','createdBy'],
   expenses:     ['id','description','amount','category','date','createdBy'],
+  priceHistory: ['serviceId','serviceName','price','changedAt'],
 };
 
 const HEADERS_ES = {
   clients:      ['ID','Nombre','Celular','Fecha Registro'],
   services:     ['ID','Nombre','Precio'],
   appointments: ['ID','ID Cliente','Nombre Cliente','Celular',
-                 'IDs Servicios','Nombres Servicios','Precio Servicios',
+                 'IDs Servicios','Nombres Servicios','Precio Servicios','Precios x Servicio',
                  'Domicilio','Precio Domicilio','Total','Dirección',
                  'Fecha','Hora','Fecha Creación','Evento Creado','ID Evento Calendar','ID Evento Admin','Completada','Atendida Por','Creada Por'],
   expenses:     ['ID','Descripción','Monto','Categoría','Fecha','Creado Por'],
@@ -71,6 +73,7 @@ function doGet(e) {
       appointments: readSheet(ss,'appointments'),
       expenses:     readSheet(ss,'expenses'),
       users:        readPublicUsers(ss),
+      priceHistory: readSheet(ss,'priceHistory'),
     });
   } catch(ex) { return err('GET: '+ex.message); }
 }
@@ -109,7 +112,23 @@ function doPost(e) {
     // ── Data sync (con auditoría) ─────────────────────────────
     const user = b.userEmail || 'desconocido';
     if (b.clients      !== undefined) { diffAndLog(ss,'clients',     b.clients,     user); writeSheet(ss,'clients',     b.clients);      }
-    if (b.services     !== undefined) { diffAndLog(ss,'services',    b.services,    user); writeSheet(ss,'services',    b.services);     }
+    if (b.services     !== undefined) {
+      diffAndLog(ss,'services', b.services, user);
+      if (b.resetPriceHistory) {
+        const sh = ss.getSheetByName(SHEETS.priceHistory);
+        if (sh) sh.clearContents();
+        const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+        const phSh = ss.getSheetByName(SHEETS.priceHistory) || ss.insertSheet(SHEETS.priceHistory);
+        phSh.getRange(1,1,1,4).setNumberFormat('@').setValues([HEADERS_ES.priceHistory]);
+        if (b.services.length > 0) {
+          const rows = b.services.map(s => [s.id, s.name, String(s.price), now]);
+          phSh.getRange(2,1,rows.length,4).setNumberFormat('@').setValues(rows);
+        }
+      } else {
+        trackPriceChanges(ss, b.services);
+      }
+      writeSheet(ss,'services', b.services);
+    }
     if (b.appointments !== undefined) { diffAndLog(ss,'appointments',b.appointments,user); writeSheet(ss,'appointments',b.appointments); }
     if (b.expenses     !== undefined) { diffAndLog(ss,'expenses',    b.expenses,    user); writeSheet(ss,'expenses',    b.expenses);     }
 
@@ -172,6 +191,19 @@ function handleFullReset(ss, b) {
     const lastRow = sh.getLastRow();
     if (lastRow > 1) sh.deleteRows(2, lastRow - 1);
   });
+
+  // Reset priceHistory — wipe and reseed with current service prices
+  try {
+    const svcs = readSheet(ss, 'services');
+    const phSh = ss.getSheetByName(SHEETS.priceHistory) || ss.insertSheet(SHEETS.priceHistory);
+    phSh.clearContents();
+    const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+    phSh.getRange(1,1,1,4).setNumberFormat('@').setValues([HEADERS_ES.priceHistory]);
+    if (svcs.length > 0) {
+      const rows = svcs.map(s => [s.id, s.name, String(s.price), now]);
+      phSh.getRange(2,1,rows.length,4).setNumberFormat('@').setValues(rows);
+    }
+  } catch(e) { console.error('priceHistory reset error: ' + e.message); }
 
   return ok({ reset: true, cleared: sheetsToClear });
 }
@@ -762,6 +794,45 @@ function removeWeeklyEmailTrigger() {
 /* ══════════════════════════════════════════════════════════════
    SHEETS INIT / READ / WRITE
 ══════════════════════════════════════════════════════════════ */
+function trackPriceChanges(ss, newServices) {
+  try {
+    const current = readSheet(ss, 'services');
+    const currentMap = {};
+    current.forEach(s => { currentMap[s.id] = s; });
+
+    const existingHistory = readSheet(ss, 'priceHistory');
+    const historyIds = new Set(existingHistory.map(h => h.serviceId));
+
+    const now    = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+    const before = Utilities.formatDate(new Date(new Date().getTime()-1000), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+    const changes = [];
+
+    newServices.forEach(s => {
+      const prev = currentMap[s.id];
+      if (!prev) {
+        changes.push({ serviceId:s.id, serviceName:s.name, price:String(s.price), changedAt:now });
+      } else if (String(prev.price) !== String(s.price)) {
+        if (!historyIds.has(s.id)) {
+          changes.push({ serviceId:s.id, serviceName:s.name, price:String(prev.price), changedAt:before });
+        }
+        changes.push({ serviceId:s.id, serviceName:s.name, price:String(s.price), changedAt:now });
+      }
+    });
+
+    if (changes.length === 0) return;
+
+    const phSh = ss.getSheetByName(SHEETS.priceHistory) || ss.insertSheet(SHEETS.priceHistory);
+    const keys = JS_KEYS.priceHistory;
+    if (phSh.getLastRow() === 0) {
+      phSh.getRange(1,1,1,HEADERS_ES.priceHistory.length).setNumberFormat('@').setValues([HEADERS_ES.priceHistory]);
+    }
+    const rows = changes.map(c => keys.map(k => c[k] || ''));
+    phSh.getRange(phSh.getLastRow()+1, 1, rows.length, keys.length).setNumberFormat('@').setValues(rows);
+  } catch(ex) {
+    console.error('trackPriceChanges error: ' + ex.message);
+  }
+}
+
 function initSheets(ss) {
   ['clients','services','appointments','expenses'].forEach(key => {
     if (!ss.getSheetByName(SHEETS[key])) ss.insertSheet(SHEETS[key]);

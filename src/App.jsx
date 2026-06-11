@@ -219,11 +219,12 @@ function ThemeStyle({ paletteId, dark }) {
 export default function App() {
   const [tab,   setTabRaw] = useState('dashboard')
   const [tabExtra, setTabExtra] = useState(null)
-  const [clients,  setC]   = useState([])
-  const [services, setS]   = useState([])
-  const [appts,    setA]   = useState([])
-  const [expenses, setE]   = useState([])
-  const [users,    setU]   = useState([])
+  const [clients,      setC]   = useState([])
+  const [services,     setS]   = useState([])
+  const [appts,        setA]   = useState([])
+  const [expenses,     setE]   = useState([])
+  const [priceHistory, setPH]  = useState([])
+  const [users,        setU]   = useState([])
   const [status,   setSt]  = useState('loading')
   const [errMsg,   setEM]  = useState('')
   const [lastSync, setLS]  = useState(null)
@@ -252,6 +253,7 @@ export default function App() {
       setS(Array.isArray(d.services)&&d.services.length?d.services:DEFAULT_SERVICES)
       setA(Array.isArray(d.appointments)?d.appointments:[])
       setE(Array.isArray(d.expenses)?d.expenses:[])
+      setPH(Array.isArray(d.priceHistory)?d.priceHistory:[])
       setU(Array.isArray(d.users)?d.users:[])
       setSt('ok'); setLS(new Date())
     }).catch(e => {
@@ -318,7 +320,7 @@ export default function App() {
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
   const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
 
-  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark}
+  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark,priceHistory}
 
   if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>{BIZ_EMOJI}</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
@@ -747,7 +749,7 @@ function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, S
     setResetError('')
     try {
       await fullReset(userEmail)
-      SC([]); SA([]); SE([])
+      SC([]); SA([]); SE([]); setPH([])
       ;['sb_c','sb_a','sb_e'].forEach(k => { try { localStorage.removeItem(k) } catch {} })
       setResetStep(2)
     } catch(e) {
@@ -1199,7 +1201,7 @@ function MonthlyBalance({appts,expenses,selMonth,setSelMonth,setTab}) {
 /* ══════════════════════════════════════════════════════════════
    APPOINTMENTS TAB — Fixed accordion (independent toggle)
 ══════════════════════════════════════════════════════════════ */
-function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,confirm,infoModal,userEmail,isAdmin,userName,users,userNameMap,tabExtra,setTab}) {
+function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,confirm,infoModal,userEmail,isAdmin,userName,users,userNameMap,tabExtra,setTab,priceHistory}) {
   const [showNew,  setNew]  = useState(false)
   const [editAppt, setEdit] = useState(null)
   // Only "today" open by default — each group toggles independently
@@ -1231,7 +1233,7 @@ function ApptsTab({clients,services,appts,visibleAppts,SA,SC,sync,deleteAppt,con
   }
 
   if (showNew)  return <NewWizard  clients={clients} services={services} appts={appts} SA={SA} SC={SC} sync={sync} infoModal={infoModal} onClose={()=>setNew(false)} userEmail={userEmail} isAdmin={isAdmin} userName={userName} users={users} userNameMap={userNameMap}/>
-  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail} users={users} userNameMap={userNameMap}/>
+  if (editAppt) return <EditAppt   appt={editAppt} services={services} appts={appts} SA={SA} sync={sync} onClose={()=>setEdit(null)} isAdmin={isAdmin} userEmail={userEmail} users={users} userNameMap={userNameMap} priceHistory={priceHistory}/>
 
   const AccGroup = ({label,color,gKey,items,canEdit=true,uMap=userNameMap}) => {
     if (items.length===0) return null
@@ -1350,7 +1352,7 @@ function ApptCard({appt,canEdit,onToggle,onEdit,onDelete,userNameMap={}}) {
 }
 
 /* ── Edit Appointment — date, time AND services ── */
-function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,userNameMap}) {
+function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,userNameMap,priceHistory}) {
   const safeSvcs = Array.isArray(services)?services:[]
 
   // Build originalIds + original price map from appt data
@@ -1366,33 +1368,52 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
     return safeSvcs.filter(s=>names.includes(s.name)).map(s=>s.id)
   }
 
-  const originalIds  = resolveInitialIds()
-  // Use the per-service price snapshot saved at booking time (appt.servicePrices).
-  // For older appointments without that field, fall back to the current catalogue price.
-  // For newly added services (not in originalIds), always use the current catalogue price.
-  const savedPrices  = appt.servicePrices || {}
-  const getPriceFor  = id => {
-    if (originalIds.includes(id)) {
-      const snap = savedPrices[id]
-      if (snap !== undefined) return toN(snap)
-      const svc = safeSvcs.find(s=>s.id===id)
-      return svc ? toN(svc.price) : 0
-    }
-    const svc = safeSvcs.find(s=>s.id===id)
+  // ── Hooks primero — regla de React ─────────────────────────────────────────
+  const _initialIds = resolveInitialIds()
+  const [date,    setDate]  = useState(cleanDate(appt.date)||todayStr())
+  const [time,    setTime]  = useState(cleanTime(appt.time)||'')
+  const [svcIds,  setSvcIds]= useState(_initialIds)
+  const [dom,     setDom]   = useState(bool(appt.domicilio))
+  const [domP,    setDomP]  = useState(toN(appt.domicilioPrice)||10000)
+
+  // ── Lógica de precios (después de hooks) ────────────────────────────────
+  const originalIds   = _initialIds
+  const safeHistory   = Array.isArray(priceHistory) ? priceHistory : []
+  const apptCreatedAt = appt.createdAt || appt.date || ''
+
+  const savedPrices = (() => {
+    let snap = {}
+    try {
+      const raw = appt.servicePrices
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        snap = Object.fromEntries(Object.entries(raw).map(([k,v]) => [k, toN(v)]))
+      } else if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+        snap = Object.fromEntries(Object.entries(JSON.parse(raw)).map(([k,v]) => [k, toN(v)]))
+      }
+    } catch(_e) { snap = {} }
+    const result = { ...snap }
+    originalIds.forEach(id => {
+      if (result[id] !== undefined) return
+      const records = safeHistory
+        .filter(h => String(h.serviceId) === String(id) && apptCreatedAt && String(h.changedAt) <= String(apptCreatedAt))
+        .sort((a, b) => String(b.changedAt).localeCompare(String(a.changedAt)))
+      if (records.length > 0) { result[id] = toN(records[0].price); return }
+      const svc = safeSvcs.find(s => s.id === id)
+      if (svc) result[id] = toN(svc.price)
+    })
+    return result
+  })()
+
+  const getPriceFor = id => {
+    if (originalIds.includes(id) && savedPrices[id] !== undefined) return savedPrices[id]
+    const svc = safeSvcs.find(s => s.id === id)
     return svc ? toN(svc.price) : 0
   }
   const pricesChanged = originalIds.some(id => {
-    const svc = safeSvcs.find(s=>s.id===id)
+    const svc = safeSvcs.find(s => s.id === id)
     if (!svc) return false
-    const snap = savedPrices[id]
-    return snap !== undefined && toN(snap) !== toN(svc.price)
+    return savedPrices[id] !== undefined && savedPrices[id] !== toN(svc.price)
   })
-
-  const [date,    setDate]  = useState(cleanDate(appt.date)||todayStr())
-  const [time,    setTime]  = useState(cleanTime(appt.time)||'')
-  const [svcIds,  setSvcIds]= useState(originalIds)
-  const [dom,     setDom]   = useState(bool(appt.domicilio))
-  const [domP,    setDomP]  = useState(toN(appt.domicilioPrice)||10000)
   const [addr,    setAddr]  = useState(appt.address||'')
   const [loading, setL]     = useState(false)
   const [result,  setR]     = useState(null)
@@ -1421,8 +1442,8 @@ function EditAppt({appt,services,appts,SA,sync,onClose,isAdmin,userEmail,users,u
   const save = async () => {
     setL(true)
     const svcNames = selSvcs.map(s=>s.name).join(', ')
-    const updatedServicePrices = Object.fromEntries(
-      selSvcs.map(s => [s.id, getPriceFor(s.id)])
+    const updatedServicePrices = JSON.stringify(
+      Object.fromEntries(selSvcs.map(s => [s.id, getPriceFor(s.id)]))
     )
     const updated  = {
       ...appt, date, time:cleanTime(time)||time,
@@ -1684,7 +1705,7 @@ function NewWizard({clients,services,appts,SA,SC,sync,infoModal,onClose,userEmai
     const appt = {
       id:uid(), clientId:fc.id||'', clientName:fc.name, clientPhone:fc.phone,
       serviceIds:selSvcs.map(s=>s.id).join(','), serviceNames:svcNames,
-      servicePrices:Object.fromEntries(selSvcs.map(s=>[s.id, toN(s.price)])),
+      servicePrices:JSON.stringify(Object.fromEntries(selSvcs.map(s=>[s.id, toN(s.price)]))),
       servicePrice:svcTotal, domicilio:dom, domicilioPrice:dom?toN(domP):0,
       totalPrice:grand, address:dom?addr:'',
       date, time:cleanTime(time)||time,
