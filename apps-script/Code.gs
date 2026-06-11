@@ -4,7 +4,7 @@
 // ║  + Reportes por usuario                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-const SECRET_TOKEN = 'CAMBIA_TU_TOKEN';
+const SECRET_TOKEN = 'MiStudio2024$ecret';
 
 // Email de la Administradora — se detecta automáticamente como el dueño del script.
 // Se usa como función para evitar errores al inicializar con ANYONE_ANONYMOUS.
@@ -41,6 +41,7 @@ const HEADERS_ES = {
                  'Domicilio','Precio Domicilio','Total','Dirección',
                  'Fecha','Hora','Fecha Creación','Evento Creado','ID Evento Calendar','ID Evento Admin','Completada','Atendida Por','Creada Por'],
   expenses:     ['ID','Descripción','Monto','Categoría','Fecha','Creado Por'],
+  priceHistory: ['ID Servicio','Nombre Servicio','Precio','Fecha Cambio'],
 };
 
 // Col: Email | PasswordHash | ResetToken | ResetExpiry | CreadoEn | Rol | Nombre

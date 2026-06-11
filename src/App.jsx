@@ -320,7 +320,7 @@ export default function App() {
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
   const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
 
-  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark,priceHistory}
+  const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark,priceHistory,setPH}
 
   if (status==='loading') return <Cent><div style={{fontSize:52,animation:'pulse 2s ease-in-out infinite'}}>{BIZ_EMOJI}</div></Cent>
   if (status==='noconfig') return <Cent><div style={{fontSize:36,marginBottom:8}}>⚙️</div><p style={{fontSize:16,fontWeight:600}}>Configura VITE_SCRIPT_URL y VITE_TOKEN en Vercel</p></Cent>
@@ -737,7 +737,7 @@ function GS() { return <style>{`
 /* ══════════════════════════════════════════════════════════════
    SETTINGS TAB — Paletas, modo oscuro, reset del sistema
 ══════════════════════════════════════════════════════════════ */
-function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm, isAdmin, userEmail }) {
+function SettingsTab({ paletteId, darkMode, savePalette, saveDark, SA, SC, SE, SS, sync, confirm, isAdmin, userEmail, setPH }) {
   const [resetInput, setResetInput] = useState('')
   const [resetDone,  setResetDone]  = useState(false)
   const [resetStep,  setResetStep]  = useState(0)
