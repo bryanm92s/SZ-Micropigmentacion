@@ -318,7 +318,11 @@ export default function App() {
 
   // Empleada only sees her own expenses and her own appts
   const visibleExpenses = isAdmin ? expenses : expenses.filter(e => e.createdBy === userEmail)
-  const visibleAppts    = isAdmin ? appts    : appts.filter(a => a.assignedTo === userEmail || a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
+  // Visibilidad para empleadas: solo citas asignadas a ella.
+  // Si la cita NO tiene assignedTo (datos antiguos), usar createdBy como respaldo.
+  const visibleAppts    = isAdmin ? appts    : appts.filter(a =>
+    a.assignedTo ? a.assignedTo === userEmail : (a.createdBy === userEmail || (!a.assignedTo && !a.createdBy))
+  )
 
   const p = {clients,services,appts,visibleAppts,expenses,visibleExpenses,SC,SS,SA,SE,sync,deleteAppt,setTab,confirm,infoModal,tabExtra,userEmail,userRole,isAdmin,userName,users,userNameMap,paletteId,darkMode,savePalette,saveDark,priceHistory,setPH}
 
